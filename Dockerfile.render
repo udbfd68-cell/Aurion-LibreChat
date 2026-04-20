@@ -1,0 +1,50 @@
+# Lightweight backend-only Dockerfile for Render deployment
+FROM node:20-alpine AS builder
+
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+COPY api/package.json ./api/package.json
+COPY client/package.json ./client/package.json
+COPY packages/data-provider/package.json ./packages/data-provider/package.json
+COPY packages/data-schemas/package.json ./packages/data-schemas/package.json
+COPY packages/api/package.json ./packages/api/package.json
+COPY packages/client/package.json ./packages/client/package.json
+
+# Remove packageManager field that causes corepack issues
+RUN node -e "var p=JSON.parse(require('fs').readFileSync('package.json','utf8'));delete p.packageManager;require('fs').writeFileSync('package.json',JSON.stringify(p,null,2))"
+
+# Install deps
+RUN npm install --legacy-peer-deps --no-audit
+
+# Copy source
+COPY . .
+
+# Build only backend packages (no client build)
+RUN NODE_OPTIONS=--max-old-space-size=384 npm run build:data-provider && \
+    NODE_OPTIONS=--max-old-space-size=384 npm run build:data-schemas && \
+    NODE_OPTIONS=--max-old-space-size=384 npm run build:api && \
+    NODE_OPTIONS=--max-old-space-size=384 npm run build:client-package
+
+# Prune dev dependencies
+RUN npm prune --production && npm cache clean --force
+
+# Production image
+FROM node:20-alpine
+
+RUN apk add --no-cache python3 py3-pip
+WORKDIR /app
+
+COPY --from=builder /app .
+
+RUN touch .env && mkdir -p /app/logs /app/uploads
+
+EXPOSE 10000
+ENV HOST=0.0.0.0
+ENV PORT=10000
+ENV NODE_ENV=production
+
+CMD ["node", "api/server/index.js"]

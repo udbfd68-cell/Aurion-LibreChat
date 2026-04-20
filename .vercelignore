@@ -1,0 +1,8 @@
+e2e/
+helm/
+redis-config/
+docker-compose*.yml
+deploy-compose.yml
+Dockerfile*
+rag.yml
+api/app/clients/tools/manifest.json

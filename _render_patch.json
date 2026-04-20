@@ -1,0 +1,7 @@
+{
+  "serviceDetails": {
+    "envSpecificDetails": {
+      "buildCommand": "node -e \"var p=JSON.parse(require('fs').readFileSync('package.json','utf8'));delete p.packageManager;require('fs').writeFileSync('package.json',JSON.stringify(p,null,2))\" && npm install --legacy-peer-deps && npm run build:packages"
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/librechat.yaml",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
+        { "key": "Pragma", "value": "no-cache" },
+        { "key": "Expires", "value": "0" }
+      ]
+    }
+  ],
+  "functions": {
+    "api/endpoints.js": { "memory": 256, "maxDuration": 15 },
+    "api/models.js": { "memory": 256, "maxDuration": 15 },
+    "api/config.js": { "memory": 256, "maxDuration": 15 },
+    "api/balance.js": { "memory": 256, "maxDuration": 15 },
+    "api/orchat.js": { "memory": 1024, "maxDuration": 60 },
+    "api/misc.js": { "memory": 512, "maxDuration": 30 },
+    "api/agents-handler.js": { "memory": 256, "maxDuration": 15 }
+  },
+  "rewrites": [
+    { "source": "/api/endpoints", "destination": "/api/endpoints" },
+    { "source": "/api/models", "destination": "/api/models" },
+    { "source": "/api/config", "destination": "/api/config" },
+    { "source": "/api/balance", "destination": "/api/balance" },
+    { "source": "/api/auth/refresh", "destination": "/api/misc?type=auth-refresh" },
+    { "source": "/api/auth/login", "destination": "/api/misc?type=auth-login" },
+    { "source": "/api/auth/logout", "destination": "/api/misc?type=auth-logout" },
+    { "source": "/api/roles/:name", "destination": "/api/misc?type=role&name=:name" },
+    { "source": "/api/agents", "destination": "/api/agents-handler" },
+    { "source": "/api/agents/:id", "destination": "/api/agents-handler?id=:id" },
+    { "source": "/api/user", "destination": "/api/misc?type=user" },
+    { "source": "/api/user/plugins", "destination": "/api/misc?type=user" },
+    { "source": "/api/user/terms", "destination": "/api/misc?type=terms" },
+    { "source": "/api/user/terms/accept", "destination": "/api/misc?type=terms-accept" },
+    { "source": "/api/search/enable", "destination": "/api/misc?type=search" },
+    { "source": "/api/convos", "destination": "/api/misc?type=convos" },
+    { "source": "/api/files/config", "destination": "/api/misc?type=files-config" },
+    { "source": "/api/presets", "destination": "/api/misc?type=presets" },
+    { "source": "/api/prompts/groups", "destination": "/api/misc?type=prompts" },
+    { "source": "/api/tags/list", "destination": "/api/misc?type=tags" },
+    { "source": "/api/mcp/tools", "destination": "/api/misc?type=mcp-tools" },
+    { "source": "/api/mcp/servers", "destination": "/api/misc?type=mcp-servers" },
+    { "source": "/api/mcp/servers/:name", "destination": "/api/misc?type=mcp-server&name=:name" },
+    { "source": "/api/mcp/:name/reinitialize", "destination": "/api/misc?type=mcp-reinit&name=:name" },
+    { "source": "/api/mcp/connection/status/:name", "destination": "/api/misc?type=mcp-status&name=:name" },
+    { "source": "/api/mcp/connection/status", "destination": "/api/misc?type=mcp-status" },
+    { "source": "/api/tool-test", "destination": "/api/misc?type=tool-test" },
+    { "source": "/api/categories", "destination": "/api/misc?type=categories" },
+    { "source": "/api/projects", "destination": "/api/misc?type=projects" },
+    { "source": "/api/projects/:id", "destination": "/api/misc?type=project&id=:id" },
+    { "source": "/api/skills", "destination": "/api/misc?type=skills" },
+    { "source": "/api/banner", "destination": "/api/misc?type=banner" },
+    { "source": "/api/memories", "destination": "/api/misc?type=memories" },
+    { "source": "/api/memories/preferences", "destination": "/api/misc?type=memory-prefs" },
+    { "source": "/api/agents/chat/Aurion", "destination": "/api/orchat?action=post" },
+    { "source": "/api/agents/chat/custom", "destination": "/api/orchat?action=post" },
+    { "source": "/api/agents/chat/agents", "destination": "/api/orchat?action=post" },
+    { "source": "/api/agents/chat/stream/:id", "destination": "/api/orchat?action=stream&id=:id" },
+    { "source": "/api/agents/chat/abort", "destination": "/api/orchat?action=abort" },
+    { "source": "/api/agents/chat/active", "destination": "/api/orchat?action=active" },
+    { "source": "/api/agents/chat/status/:id", "destination": "/api/orchat?action=status&id=:id" },
+    { "source": "/api/files/speech/config/get", "destination": "/api/misc?type=speech-config" },
+    { "source": "/api/files", "destination": "/api/misc?type=files" },
+    { "source": "/api/user/settings/favorites", "destination": "/api/misc?type=favorites" },
+    { "source": "/api/tags", "destination": "/api/misc?type=tags-all" },
+    { "source": "/api/share/link/:id", "destination": "/api/misc?type=share-link&id=:id" },
+    { "source": "/api/agents/tools/calls", "destination": "/api/misc?type=tool-calls" },
+    { "source": "/api/convos/gen_title/:id", "destination": "/api/orchat?action=gen-title&convoId=:id" },
+    { "source": "/api/convos/:convoId", "destination": "/api/orchat?action=convo-detail&convoId=:convoId" },
+    { "source": "/api/messages/:convoId", "destination": "/api/orchat?action=messages&convoId=:convoId" },
+    { "source": "/api/:path*", "destination": "https://librechat-api-ew3n.onrender.com/api/:path*" },
+    { "source": "/oauth/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/oauth/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
