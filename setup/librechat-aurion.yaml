@@ -1,0 +1,317 @@
+# Aurion Studio — LibreChat Claude.ai Clone Configuration
+# Version: 1.3.8
+# Purpose: Complete MCP connectors + OAuth + Agents configuration for Claude.ai-like experience
+#
+# DEPLOYMENT INSTRUCTIONS:
+# 1. Copy this file to your backend root as 'librechat.yaml'
+# 2. Set environment variables (see .env.example)
+# 3. Restart LibreChat backend
+#
+# For Docker: Add volume mount: -v ./librechat.yaml:/app/librechat.yaml:ro
+# For Render: Set CONFIG_PATH=/app/librechat.yaml in environment variables
+
+version: 1.3.8
+
+cache: true
+
+# ==========================================
+# INTERFACE
+# ==========================================
+interface:
+  customWelcome: 'Welcome to Aurion AI — All AI models, real connectors, one interface.'
+  fileSearch: true
+  privacyPolicy:
+    externalUrl: 'https://aurion.studio/privacy'
+    openNewTab: true
+  termsOfService:
+    externalUrl: 'https://aurion.studio/terms'
+    openNewTab: true
+    modalAcceptance: true
+    modalTitle: 'Terms of Service for Aurion AI'
+    modalContent: |
+      # Terms and Conditions for Aurion AI
+      
+      *Effective Date: April 21, 2026*
+      
+      Welcome to Aurion AI, the open-source AI platform with real MCP connectors for Gmail, Drive, Calendar, Linear, and more.
+      
+      ## 1. MCP Connectors
+      
+      Aurion AI provides pre-configured MCP (Model Context Protocol) servers for popular services. These connectors require OAuth authorization before use.
+      
+      ## 2. Data Privacy
+      
+      Your data is processed according to our Privacy Policy. MCP connectors follow the privacy policies of their respective services (Google, Linear, etc.).
+      
+      ## 3. Usage
+      
+      Use Aurion AI only for lawful purposes. Prohibited behavior includes harassment, malicious content, or disrupting service.
+      
+      ## 4. Contact
+      
+      For questions, contact: support@aurion.studio
+  
+  modelSelect: true
+  parameters: true
+  presets: true
+  prompts:
+    use: true
+    create: true
+    share: false
+    public: false
+  bookmarks: true
+  multiConvo: true
+  agents:
+    use: true
+    create: true
+    share: false
+    public: false
+  peoplePicker:
+    users: true
+    groups: true
+    roles: true
+  marketplace:
+    use: false
+  fileCitations: true
+  mcpServers:
+    use: true
+    create: false
+    share: false
+    public: false
+
+# ==========================================
+# MCP SETTINGS — Security
+# ==========================================
+mcpSettings:
+  allowedDomains:
+    - 'gmailmcp.googleapis.com'
+    - 'drivemcp.googleapis.com'
+    - 'calendarmcp.googleapis.com'
+    - 'mcp.linear.app'
+    - 'api.githubcopilot.com'
+    - 'mcp.slack.com'
+    - 'mcp.notion.com'
+    - 'api.anthropic.com'
+    - 'api.openai.com'
+    - 'openrouter.ai'
+
+# ==========================================
+# MCP SERVERS — Pre-configured Connectors (App-level)
+# ==========================================
+# These MCP servers are pre-configured at the App level.
+# Users only need to click "Connect" → OAuth → Connected.
+# No URLs to enter. No manual configuration required.
+mcpServers:
+  
+  # ── GOOGLE SERVICES ──
+  # All Google services use the SAME OAuth app (one Google Cloud Project)
+  # Required env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, LIBRECHAT_URL
+  
+  gmail:
+    type: streamable-http
+    url: https://gmailmcp.googleapis.com/mcp/v1
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false  # Only start when user clicks Connect
+    serverInstructions: |
+      You have access to the user's Gmail account.
+      You can read emails, search emails, send emails, and manage labels.
+      Always ask for confirmation before sending emails.
+      Never share email content with third parties.
+    oauth:
+      authorization_url: https://accounts.google.com/o/oauth2/v2/auth
+      token_url: https://oauth2.googleapis.com/token
+      client_id: ${GOOGLE_CLIENT_ID}
+      client_secret: ${GOOGLE_CLIENT_SECRET}
+      redirect_uri: ${LIBRECHAT_URL}/api/mcp/gmail/oauth/callback
+      scope: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly'
+      grant_types_supported: [authorization_code, refresh_token]
+      token_endpoint_auth_methods_supported: [client_secret_post]
+      response_types_supported: [code]
+      code_challenge_methods_supported: [S256]
+  
+  google-drive:
+    type: streamable-http
+    url: https://drivemcp.googleapis.com/mcp/v1
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Google Drive.
+      You can list, read, create, update, and delete files and folders.
+      Always ask for confirmation before creating or deleting files.
+    oauth:
+      authorization_url: https://accounts.google.com/o/oauth2/v2/auth
+      token_url: https://oauth2.googleapis.com/token
+      client_id: ${GOOGLE_CLIENT_ID}
+      client_secret: ${GOOGLE_CLIENT_SECRET}
+      redirect_uri: ${LIBRECHAT_URL}/api/mcp/google-drive/oauth/callback
+      scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.file'
+      grant_types_supported: [authorization_code, refresh_token]
+  
+  google-calendar:
+    type: streamable-http
+    url: https://calendarmcp.googleapis.com/mcp/v1
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Google Calendar.
+      You can read, create, update, and delete calendar events.
+      Always confirm with the user before creating or modifying events.
+    oauth:
+      authorization_url: https://accounts.google.com/o/oauth2/v2/auth
+      token_url: https://oauth2.googleapis.com/token
+      client_id: ${GOOGLE_CLIENT_ID}
+      client_secret: ${GOOGLE_CLIENT_SECRET}
+      redirect_uri: ${LIBRECHAT_URL}/api/mcp/google-calendar/oauth/callback
+      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events'
+      grant_types_supported: [authorization_code, refresh_token]
+  
+  # ── LINEAR ──
+  # Required env vars: LINEAR_CLIENT_ID, LINEAR_CLIENT_SECRET, LIBRECHAT_URL
+  
+  linear:
+    type: streamable-http
+    url: https://mcp.linear.app/mcp
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Linear workspace.
+      You can manage issues, projects, teams, cycles, and roadmaps.
+    oauth:
+      authorization_url: https://linear.app/oauth/authorize
+      token_url: https://api.linear.app/oauth/token
+      client_id: ${LINEAR_CLIENT_ID}
+      client_secret: ${LINEAR_CLIENT_SECRET}
+      redirect_uri: ${LIBRECHAT_URL}/api/mcp/linear/oauth/callback
+      scope: 'read write'
+      grant_types_supported: [authorization_code, refresh_token]
+  
+  # ── GITHUB (via PAT) ──
+  # No OAuth required — user enters their Personal Access Token
+  # This is simpler for GitHub than OAuth for self-hosted setups
+  
+  github:
+    type: stdio
+    command: npx
+    args: ['-y', '@modelcontextprotocol/server-github']
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: '{{GITHUB_PAT}}'
+    startup: false
+    serverInstructions: |
+      You have access to GitHub repositories via the user's Personal Access Token.
+      You can read repos, issues, PRs, commits, and manage code.
+    customUserVars:
+      GITHUB_PAT:
+        title: 'GitHub Personal Access Token'
+        description: 'Your GitHub PAT (classic) with repo, read:org scopes. Create at https://github.com/settings/tokens'
+  
+  # ── FILESYSTEM (local) ──
+  # No OAuth required — local file access
+  
+  filesystem:
+    type: stdio
+    command: npx
+    args: ['-y', '@modelcontextprotocol/server-filesystem', '/workspace']
+    serverInstructions: |
+      You have access to files in the /workspace directory.
+      You can read, write, create, and delete files there.
+  
+  # ── BRAVE SEARCH (Web Search) ──
+  # Required env var: BRAVE_API_KEY
+  
+  brave-search:
+    type: stdio
+    command: npx
+    args: ['-y', '@modelcontextprotocol/server-brave-search']
+    env:
+      BRAVE_API_KEY: '${BRAVE_API_KEY}'
+    serverInstructions: |
+      Use Brave Search to find current information on the web.
+      Use it when the user asks about recent events or needs web search.
+
+# ==========================================
+# AGENTS — Global Configuration
+# ==========================================
+agents:
+  artifacts: true
+  recursiveRun: true
+
+# ==========================================
+# ENDPOINTS — LLM Providers
+# ==========================================
+endpoints:
+  
+  # ── ANTHROPIC ──
+  # Required: ANTHROPIC_API_KEY
+  
+  anthropic:
+    apiKey: ${ANTHROPIC_API_KEY}
+    models:
+      default: [claude-opus-4-6, claude-sonnet-4-6, claude-3.5-sonnet]
+      fetch: false
+    titleConvo: true
+    titleModel: 'claude-3.5-sonnet'
+  
+  # ── OPENAI ──
+  # Required: OPENAI_API_KEY
+  
+  openAI:
+    apiKey: ${OPENAI_API_KEY}
+    models:
+      default: [gpt-4o, gpt-4o-mini]
+      fetch: true
+  
+  # ── OPENROUTER ──
+  # Required: OPENROUTER_API_KEY
+  # Multi-provider access (Anthropic, OpenAI, Google, Meta, DeepSeek, etc.)
+  
+  custom:
+    - name: 'OpenRouter'
+      apiKey: ${OPENROUTER_API_KEY}
+      baseURL: 'https://openrouter.ai/api/v1'
+      models:
+        default: [
+          anthropic/claude-opus-4,
+          anthropic/claude-sonnet-4,
+          meta-llama/llama-4-maverick,
+          deepseek/deepseek-r1,
+          google/gemini-2.5-pro,
+          nvidia/nemotron-nano-9b-v2:free
+        ]
+        fetch: true
+      titleConvo: true
+  
+  # ── AGENTS ENDPOINT ──
+  # For Agent Builder and Agent execution
+  
+  agents:
+    type: 'agents'
+    disableBuilder: false
+    order: 1
+    models: [
+      anthropic/claude-opus-4,
+      anthropic/claude-sonnet-4,
+      meta-llama/llama-4-maverick
+    ]
+    capabilities: [tools, actions, execute_code, file_search]
+
+# ==========================================
+# ACTIONS — Domain Restrictions (SSRF Protection)
+# ==========================================
+actions:
+  allowedDomains:
+    - 'api.github.com'
+    - 'api.openai.com'
+    - 'api.anthropic.com'
+    - 'openrouter.ai'
+    - 'gmail.googleapis.com'
+    - 'www.googleapis.com'
+    - 'linear.app'
+    - 'api.linear.app'

@@ -1,0 +1,101 @@
+# Aurion Studio — Docker Compose Override for Claude.ai Clone
+# This file extends the base docker-compose.yml with additional services
+#
+# DEPLOYMENT INSTRUCTIONS:
+# 1. Copy this file to your LibreChat root as 'docker-compose.override.yml'
+# 2. Ensure setup/librechat-aurion.yaml is copied as 'librechat.yaml'
+# 3. Run: docker compose up -d
+#
+# For production deployment, adjust resource limits and add proper secrets
+
+version: '3.8'
+
+services:
+  api:
+    volumes:
+      # Mount the complete LibreChat configuration
+      - ./librechat.yaml:/app/librechat.yaml:ro
+    environment:
+      - CONFIG_PATH=/app/librechat.yaml
+      # Override to use custom librechat.yaml
+    depends_on:
+      - mongodb
+      - meilisearch
+      - redis
+
+  # ── SANDPACK BUNDLER (for Artifacts) ──
+  # Self-hosted alternative to CodeSandbox for React artifact rendering
+  # Provides live preview of code artifacts without external dependencies
+  
+  sandpack-bundler:
+    image: codesandbox/sandpack-bundler:latest
+    restart: unless-stopped
+    ports:
+      - "4173:4173"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - librechat
+
+  # ── SEARXNG (Web Search) ──
+  # Self-hosted privacy-respecting search engine
+  # Alternative to Tavily API for web search functionality
+  
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      - BASE_URL=http://searxng:8080
+      - INSTANCE_NAME=Aurion Search
+    networks:
+      - librechat
+
+  # ── OLLAMA (Local LLM) ──
+  # Self-hosted LLM inference for local models
+  # Supports Llama, Mistral, Gemma, and other open-source models
+  
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - librechat
+    # GPU support (uncomment if you have NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ── FIRECRAWL (Web Scraper) ──
+  # Self-hosted web scraper for extracting content from URLs
+  # Alternative to Firecrawl API for web search functionality
+  
+  firecrawl:
+    image: mendableai/firecrawl:latest
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - NUM_WORKERS=4
+    networks:
+      - librechat
+
+volumes:
+  ollama_data:
+
+networks:
+  librechat:
+    external: true
