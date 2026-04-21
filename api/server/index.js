@@ -203,6 +203,8 @@ const startServer = async () => {
 
   app.use('/api/tags', routes.tags);
   app.use('/api/mcp', routes.mcp);
+  // Contextual MCP routing (typing-hint badges + server-side tool injection)
+  app.use('/api/mcp', routes.mcpRouting);
 
   /** 404 for unmatched API routes */
   app.use('/api', apiNotFound);

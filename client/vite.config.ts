@@ -97,7 +97,6 @@ export default defineConfig(({ command }) => ({
       workbox: {
         globPatterns: [
           '**/*.{js,css,html}',
-          'assets/favicon*.png',
           'manifest.webmanifest',
         ],
         globIgnores: ['images/**/*', '**/*.map', 'sw.js', 'workbox-*.js'],
@@ -150,7 +149,7 @@ export default defineConfig(({ command }) => ({
   build: {
     sourcemap: process.env.NODE_ENV === 'development',
     outDir: './dist',
-    minify: 'esbuild',
+    minify: process.env.VITE_DISABLE_MINIFY === 'true' ? false : 'esbuild',
     rollupOptions: {
       preserveEntrySignatures: 'strict',
       output: {
