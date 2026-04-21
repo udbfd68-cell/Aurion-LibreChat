@@ -5,4 +5,11 @@ docker-compose*.yml
 deploy-compose.yml
 Dockerfile*
 rag.yml
-api/app/clients/tools/manifest.json
+# Exclude the root Express backend (deployed separately to Render).
+# Without this, Vercel tries to bundle api/server/* as serverless functions
+# and the second "Installing dependencies" stage hangs.
+/api/
+/config/
+/test-results/
+/setup/
+
