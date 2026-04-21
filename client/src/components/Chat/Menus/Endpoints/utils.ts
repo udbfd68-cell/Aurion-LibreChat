@@ -93,8 +93,8 @@ export function filterModels(
       const assistant = assistantsMap[endpoint.value][modelId];
       modelName =
         typeof assistant.name === 'string' && assistant.name ? (assistant.name as string) : modelId;
-    } else if (endpoint.value === 'custom') {
-      // Parse OpenRouter model names for custom endpoints
+    } else {
+      // Parse OpenRouter-style and technical IDs into friendly names for all non-agent/assistant endpoints
       modelName = parseOpenRouterModelName(modelId);
     }
 
@@ -209,8 +209,9 @@ export const getDisplayValue = ({
       return endpoint.assistantNames[selectedValues.model];
     }
 
-    // Parse OpenRouter model names for custom endpoints
-    if (endpoint.value === 'custom' && selectedValues.model) {
+    // Parse OpenRouter-style and technical model IDs into friendly names
+    // (safe no-op for non-slash IDs)
+    if (selectedValues.model) {
       return parseOpenRouterModelName(selectedValues.model);
     }
 

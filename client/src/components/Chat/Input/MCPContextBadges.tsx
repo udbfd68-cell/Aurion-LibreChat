@@ -35,15 +35,19 @@ export function MCPContextBadges({ activeServers }: MCPContextBadgesProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 px-1 py-1">
-      {activeServers.map((serverName) => (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1 text-xs text-text-tertiary">
+      <span className="select-none opacity-60">via</span>
+      {activeServers.map((serverName, idx) => (
         <div
           key={serverName}
-          className="flex items-center gap-1.5 rounded-full bg-surface-tertiary px-2.5 py-1 text-xs text-text-secondary"
+          className="flex items-center gap-1"
           title={`Using ${SERVER_LABELS[serverName] || serverName}`}
         >
-          {SERVER_ICONS[serverName] || <div className="h-3 w-3 rounded-full bg-surface-quaternary" />}
-          <span className="font-medium">{SERVER_LABELS[serverName] || serverName}</span>
+          {SERVER_ICONS[serverName]}
+          <span>{SERVER_LABELS[serverName] || serverName}</span>
+          {idx < activeServers.length - 1 && (
+            <span className="ml-1 opacity-40">·</span>
+          )}
         </div>
       ))}
     </div>

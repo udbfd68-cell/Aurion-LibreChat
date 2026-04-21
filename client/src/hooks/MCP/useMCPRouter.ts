@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { request } from 'librechat-data-provider';
 
 interface MCPRouterResponse {
   servers: string[];
@@ -20,19 +21,7 @@ export function useMCPRouter() {
     setError(null);
 
     try {
-      const response = await fetch('/api/mcp/route', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data: MCPRouterResponse = await response.json();
+      const data = await request.post('/api/mcp/route', { message }) as MCPRouterResponse;
       setActiveServers(data.servers);
       return data.servers;
     } catch (err) {

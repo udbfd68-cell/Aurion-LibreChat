@@ -158,13 +158,8 @@ export default function useSideNavLinks({
       Component: SkillPanel,
     });
 
-    links.push({
-      title: 'com_ui_connectors',
-      label: '',
-      icon: Plug2,
-      id: 'connectors',
-      Component: ConnectorsPage,
-    });
+    // Connectors panel hidden from sidebar - MCP servers are auto-activated by contextual routing.
+    // OAuth setup still accessible via /connectors URL if needed.
 
     if (hasAccessToBookmarks) {
       links.push({

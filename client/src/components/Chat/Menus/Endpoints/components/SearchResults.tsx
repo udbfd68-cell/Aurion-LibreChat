@@ -121,8 +121,8 @@ export function SearchResults({ results, localize, searchValue }: SearchResultsP
                     endpoint.assistantNames[model.name]
                   ) {
                     modelName = endpoint.assistantNames[model.name];
-                  } else if (endpoint.value === 'custom') {
-                    // Parse OpenRouter model names for custom endpoints
+                  } else {
+                    // Parse OpenRouter-style and technical IDs into friendly names
                     modelName = parseOpenRouterModelName(model.name);
                   }
                   return modelName.toLowerCase().includes(lowerQuery);
@@ -161,8 +161,8 @@ export function SearchResults({ results, localize, searchValue }: SearchResultsP
                     endpoint.assistantNames[modelId]
                   ) {
                     modelName = endpoint.assistantNames[modelId];
-                  } else if (endpoint.value === 'custom') {
-                    // Parse OpenRouter model names for custom endpoints
+                  } else {
+                    // Parse OpenRouter-style and technical IDs into friendly names
                     modelName = parseOpenRouterModelName(modelId);
                   }
 

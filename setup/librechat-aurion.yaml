@@ -247,59 +247,50 @@ agents:
 # ENDPOINTS — LLM Providers
 # ==========================================
 endpoints:
-  
+
   # ── ANTHROPIC ──
+  # Disabled - using Ollama Cloud only
   # Required: ANTHROPIC_API_KEY
-  
-  anthropic:
-    apiKey: ${ANTHROPIC_API_KEY}
-    models:
-      default: [claude-opus-4-6, claude-sonnet-4-6, claude-3.5-sonnet]
-      fetch: false
-    titleConvo: true
-    titleModel: 'claude-3.5-sonnet'
-  
+
+  # anthropic:
+  #   apiKey: ${ANTHROPIC_API_KEY}
+  #   models:
+  #     default: [claude-opus-4-6, claude-sonnet-4-6, claude-3.5-sonnet]
+  #     fetch: false
+  #   titleConvo: true
+  #   titleModel: 'claude-3.5-sonnet'
+
   # ── OPENAI ──
+  # Disabled - using Ollama Cloud only
   # Required: OPENAI_API_KEY
-  
-  openAI:
-    apiKey: ${OPENAI_API_KEY}
-    models:
-      default: [gpt-4o, gpt-4o-mini]
-      fetch: true
-  
-  # ── OPENROUTER ──
-  # Required: OPENROUTER_API_KEY
-  # Multi-provider access (Anthropic, OpenAI, Google, Meta, DeepSeek, etc.)
-  
+
+  # openAI:
+  #   apiKey: ${OPENAI_API_KEY}
+  #   models:
+  #     default: [gpt-4o, gpt-4o-mini]
+  #     fetch: true
+
+  # ── OLLAMA CLOUD ──
+  # Required: OLLAMA_API_KEY
+  # Single model: gemma4:31b
+
   custom:
-    - name: 'OpenRouter'
-      apiKey: ${OPENROUTER_API_KEY}
-      baseURL: 'https://openrouter.ai/api/v1'
+    - name: 'Ollama Cloud'
+      apiKey: ${OLLAMA_API_KEY}
+      baseURL: 'https://ollama.com/v1'
       models:
-        default: [
-          anthropic/claude-opus-4,
-          anthropic/claude-sonnet-4,
-          meta-llama/llama-4-maverick,
-          deepseek/deepseek-r1,
-          google/gemini-2.5-pro,
-          nvidia/nemotron-nano-9b-v2:free
-        ]
-        fetch: true
+        default: ['gemma4:31b']
+        fetch: false
       titleConvo: true
   
   # ── AGENTS ENDPOINT ──
   # For Agent Builder and Agent execution
-  
+
   agents:
     type: 'agents'
     disableBuilder: false
     order: 1
-    models: [
-      anthropic/claude-opus-4,
-      anthropic/claude-sonnet-4,
-      meta-llama/llama-4-maverick
-    ]
+    models: ['gemma4:31b']
     capabilities: [tools, actions, execute_code, file_search]
 
 # ==========================================
@@ -311,6 +302,7 @@ actions:
     - 'api.openai.com'
     - 'api.anthropic.com'
     - 'openrouter.ai'
+    - 'ollama.com'
     - 'gmail.googleapis.com'
     - 'www.googleapis.com'
     - 'linear.app'

@@ -46,8 +46,9 @@ export function EndpointModelItem({ modelId, endpoint }: EndpointModelItemProps)
     endpoint.assistantNames?.[modelId]
   ) {
     modelName = endpoint.assistantNames[modelId];
-  } else if (endpoint && modelId && endpoint.value === 'custom') {
-    // Parse OpenRouter model names for custom endpoints
+  } else if (endpoint && modelId) {
+    // Parse OpenRouter-style and technical model IDs into friendly names
+    // (safe no-op for non-slash IDs that are already simple)
     modelName = parseOpenRouterModelName(modelId);
   }
 

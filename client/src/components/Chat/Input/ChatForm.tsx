@@ -277,8 +277,6 @@ const ChatForm = memo(function ChatForm({
             )}
           >
             <TextareaHeader addedConvo={addedConvo} setAddedConvo={setAddedConvo} />
-            {/* MCP Context Badges - shows active MCP servers based on message content */}
-            <MCPContextBadges activeServers={activeMCPServers} />
             {/* WIP */}
             <EditBadges
               isEditingChatBadges={isEditingBadges}
@@ -343,6 +341,12 @@ const ChatForm = memo(function ChatForm({
                 </div>
               </div>
             )}
+            {/* MCP Context Badges - discrete indicator of auto-activated servers (like "via Gmail") */}
+            {activeMCPServers.length > 0 && (
+              <div className={cn('px-4', isRTL ? 'flex-row-reverse' : '')}>
+                <MCPContextBadges activeServers={activeMCPServers} />
+              </div>
+            )}
             <div
               className={cn(
                 '@container items-between flex gap-2 pb-2',
@@ -359,9 +363,7 @@ const ChatForm = memo(function ChatForm({
                 />
               </div>
               <BadgeRow
-                showEphemeralBadges={
-                  !!endpoint && !isAgentsEndpoint(endpoint) && !isAssistantsEndpoint(endpoint)
-                }
+                showEphemeralBadges={false}
                 isSubmitting={isSubmitting}
                 conversationId={conversationId}
                 specName={conversation?.spec}
