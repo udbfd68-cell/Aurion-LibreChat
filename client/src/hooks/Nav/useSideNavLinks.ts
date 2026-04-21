@@ -158,13 +158,14 @@ export default function useSideNavLinks({
       Component: SkillPanel,
     });
 
-    links.push({
-      title: 'com_ui_connectors',
-      label: '',
-      icon: Plug2,
-      id: 'connectors',
-      Component: ConnectorsPage,
-    });
+    // Aurion: Connectors hidden — MCP auto-routing handles tool activation invisibly
+    // links.push({
+    //   title: 'com_ui_connectors',
+    //   label: '',
+    //   icon: Plug2,
+    //   id: 'connectors',
+    //   Component: ConnectorsPage,
+    // });
 
     if (hasAccessToBookmarks) {
       links.push({

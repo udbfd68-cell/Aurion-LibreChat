@@ -131,6 +131,9 @@ export default function useMessageActions(props: TMessageActions) {
     } else if (assistant) {
       return assistant.name ?? 'Assistant';
     } else {
+      if (message?.sender === 'Custom' && message?.model) {
+        return message.model;
+      }
       return message?.sender;
     }
   }, [message, agent, assistant, UsernameDisplay, user, localize]);

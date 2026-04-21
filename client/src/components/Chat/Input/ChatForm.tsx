@@ -33,8 +33,10 @@ import StreamAudio from './StreamAudio';
 import StopButton from './StopButton';
 import SendButton from './SendButton';
 import EditBadges from './EditBadges';
+import IntentBadges from './IntentBadges';
 import BadgeRow from './BadgeRow';
 import Mention from './Mention';
+import { useIntentDetection } from '~/hooks/Chat';
 import store from '~/store';
 
 interface ChatFormProps {
@@ -182,6 +184,7 @@ const ChatForm = memo(function ChatForm({
   });
 
   const textValue = useWatch({ control: methods.control, name: 'text' });
+  const intentBadges = useIntentDetection(textValue ?? '');
 
   useEffect(() => {
     if (textAreaRef.current) {
@@ -344,6 +347,7 @@ const ChatForm = memo(function ChatForm({
                   setFilesLoading={setFilesLoading}
                 />
               </div>
+              <IntentBadges intents={intentBadges} />
               <BadgeRow
                 showEphemeralBadges={
                   !!endpoint && !isAgentsEndpoint(endpoint) && !isAssistantsEndpoint(endpoint)

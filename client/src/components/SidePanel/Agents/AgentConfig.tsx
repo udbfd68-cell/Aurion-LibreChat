@@ -305,14 +305,16 @@ export default function AgentConfig() {
             {fileSearchEnabled && <FileSearch agent_id={agent_id} files={knowledge_files} />}
           </div>
         )}
-        {/* MCP Section */}
-        {availableMCPServers != null && availableMCPServers.length > 0 && (
-          <MCPTools
-            agentId={agent_id}
-            mcpServerNames={mcpServerNames}
-            setShowMCPToolDialog={setShowMCPToolDialog}
-          />
-        )}
+{/* MCP Section completely hidden by Aurion */}
+          {/*
+          {availableMCPServers != null && availableMCPServers.length > 0 && (
+            <MCPTools
+              agentId={agent_id}
+              mcpServerNames={mcpServerNames}
+              setShowMCPToolDialog={setShowMCPToolDialog}
+            />
+          )}
+          */}
 
         {/* Agent Tools & Actions */}
         <div className="mb-4">

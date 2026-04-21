@@ -377,8 +377,8 @@ function BadgeRow({
             <FileSearch />
             <ResearchToggle />
             <Artifacts />
-            <MCPSelect />
-            <ConnectorToggle />
+            {/* <MCPSelect /> */}
+            {/* <ConnectorToggle /> */}
           </>
         )}
         {ghostBadge && (

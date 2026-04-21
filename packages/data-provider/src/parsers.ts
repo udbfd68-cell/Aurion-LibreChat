@@ -274,6 +274,15 @@ export const getResponseSender = (endpointOption: Partial<t.TEndpointOption>): s
     } else if (model && model.includes('gpt-')) {
       const gptVersion = extractGPTVersion(model);
       return gptVersion || 'GPT';
+    } else if (model && model.includes('/')) {
+      // OpenRouter-style IDs: 'anthropic/claude-opus-4-5' → 'Claude Opus 4.5'
+      const modelPart = model.split('/').pop() ?? model;
+      return modelPart
+        .replace(/-(\d)/g, ' $1')
+        .replace(/-/g, ' ')
+        .split(' ')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
     } else if (modelDisplayLabel) {
       return modelDisplayLabel;
     }
