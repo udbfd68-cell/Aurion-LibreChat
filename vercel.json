@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd client && npm run build",
+  "buildCommand": null,
   "outputDirectory": "client/dist",
-  "installCommand": "npm install",
+  "installCommand": null,
   "framework": null,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/api/$1" },
