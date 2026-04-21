@@ -75,8 +75,9 @@ router.get('/tools', requireJwtAuth, async (req, res) => {
 /**
  * MCP Contextual Routing
  * Analyzes user message and returns relevant MCP servers based on keywords
+ * No authentication required - simple keyword matching service
  */
-router.post('/route', requireJwtAuth, async (req, res) => {
+router.post('/route', async (req, res) => {
   try {
     const { message } = req.body;
 

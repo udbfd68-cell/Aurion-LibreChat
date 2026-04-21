@@ -1,7 +1,12 @@
 import { chromium, type FullConfig, type Page } from '@playwright/test';
-import localUser from '../config.local';
 
 const timeout = 15000;
+
+const localUser = {
+  name: 'Test User',
+  email: 'test@example.com',
+  password: 'TestPassword123!'
+};
 
 async function register(page: Page) {
   await page.getByRole('link', { name: 'Sign up' }).click();
