@@ -1,6 +1,32 @@
 const https = require('https');
+const http = require('http');
 const crypto = require('crypto');
 const zlib = require('zlib');
+
+// ─── Ollama API helper ───
+// OLLAMA_BASE_URL must be a publicly accessible URL when deployed on Vercel.
+// For local dev: http://localhost:11434
+// For production: expose via ngrok or a cloud Ollama instance.
+function getOllamaOptions(requestBody) {
+  const base = (process.env.OLLAMA_BASE_URL || 'http://localhost:11434').replace(/\/$/, '');
+  const url = new URL(base + '/v1/chat/completions');
+  const isHttps = url.protocol === 'https:';
+  const port = url.port ? parseInt(url.port) : (isHttps ? 443 : 80);
+  return {
+    module: isHttps ? https : http,
+    options: {
+      hostname: url.hostname,
+      port,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ollama',
+        'Content-Length': Buffer.byteLength(requestBody),
+      },
+    },
+  };
+}
 const { callTool: mcpCallTool } = require('./mcp-client');
 const realTools = require('./real-tools');
 
@@ -271,13 +297,10 @@ async function executeTool(name, args, host) {
 }
 
 function callOpenRouterSync(model, messages, tools, temperature, maxTokens) {
-  const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
   const reqBody = JSON.stringify({ model, messages, tools, temperature, max_tokens: maxTokens });
   return new Promise((resolve) => {
-    const apiReq = https.request({
-      hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENROUTER_KEY, 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat', 'Content-Length': Buffer.byteLength(reqBody) },
-    }, (apiRes) => {
+    const { module: reqModule, options: reqOptions } = getOllamaOptions(reqBody);
+    const apiReq = reqModule.request(reqOptions, (apiRes) => {
       let data = '';
       apiRes.on('data', c => data += c);
       apiRes.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve({ error: data }); } });
@@ -303,7 +326,7 @@ module.exports = async function handler(req, res) {
   // ═══ DIRECT: Single-request SSE (frontend POST → immediate SSE response) ═══
   if (action === 'direct' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'nvidia/nemotron-nano-9b-v2:free';
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gemma4';
     const text = body.text || body.editedContent || '';
     const userMessageId = body.messageId || uuid();
     const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
@@ -347,14 +370,7 @@ module.exports = async function handler(req, res) {
     const ctx = { model: finalModel, messages, userMessageId, parentMessageId, conversationId, temperature, maxTokens, text, ts: Date.now(), agentInstructions, agentId, agentName, agentTools };
     global._orStore.set(conversationId, ctx);
 
-    // Start SSE immediately
-    const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
-    if (!OPENROUTER_KEY) {
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
-      sendSSEError(res, 'Aurion API key not configured');
-      return res.end();
-    }
-
+    // Start SSE immediately — Ollama does not require an API key
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
@@ -455,10 +471,8 @@ module.exports = async function handler(req, res) {
     }
 
     await new Promise((resolve) => {
-      const apiReq = https.request({
-        hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENROUTER_KEY, 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat', 'Content-Length': Buffer.byteLength(requestBody) },
-      }, (apiRes) => {
+      const { module: reqModule, options: reqOpts } = getOllamaOptions(requestBody);
+      const apiReq = reqModule.request(reqOpts, (apiRes) => {
         if (apiRes.statusCode !== 200) {
           let errBody = '';
           apiRes.on('data', (c) => (errBody += c));
@@ -524,11 +538,7 @@ module.exports = async function handler(req, res) {
   // ═══ POST: Start Chat ═══
   if (action === 'post' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'nvidia/nemotron-nano-9b-v2:free';
-    const text = body.text || body.editedContent || '';
-    const userMessageId = body.messageId || uuid();
-    const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
-    const incomingConvoId = body.conversationId;
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gemma4';
     const temperature = body.model_parameters?.temperature ?? body.temperature ?? 0.7;
     const maxTokens = body.model_parameters?.maxOutputTokens ?? body.max_tokens ?? 4096;
 
@@ -645,10 +655,10 @@ module.exports = async function handler(req, res) {
       return res.end();
     }
 
-    const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
-    if (!OPENROUTER_KEY) {
+    const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
+    if (!OLLAMA_BASE_URL) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
-      sendSSEError(res, 'Aurion API key not configured');
+      sendSSEError(res, 'OLLAMA_BASE_URL not configured. Please set the environment variable to your Ollama server URL.');
       return res.end();
     }
 
@@ -850,16 +860,8 @@ module.exports = async function handler(req, res) {
     }
 
     await new Promise((resolve) => {
-      const apiReq = https.request({
-        hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + OPENROUTER_KEY,
-          'HTTP-Referer': 'https://client-gold-zeta.vercel.app',
-          'X-Title': 'Aurion Chat',
-          'Content-Length': Buffer.byteLength(requestBody),
-        },
-      }, (apiRes) => {
+      const { module: reqModule2, options: reqOpts2 } = getOllamaOptions(requestBody);
+      const apiReq = reqModule2.request(reqOpts2, (apiRes) => {
         if (apiRes.statusCode !== 200) {
           let errBody = '';
           apiRes.on('data', (c) => (errBody += c));
@@ -984,13 +986,13 @@ module.exports = async function handler(req, res) {
     const convoId = req.query.convoId || '';
     cleanStore();
     const ctx = global._orStore.get(convoId);
-    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'nvidia/nemotron-nano-9b-v2:free', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'Ollama', model: 'gemma4', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     const firstUserMsg = ctx.messages?.find(m => m.role === 'user');
     return res.status(200).json({
       conversationId: convoId,
       title: firstUserMsg ? firstUserMsg.content.substring(0, 60) : 'New Chat',
-      endpoint: ctx.endpoint || 'custom',
-      model: ctx.model || 'nvidia/nemotron-nano-9b-v2:free',
+      endpoint: ctx.endpoint || 'Ollama',
+      model: ctx.model || 'gemma4',
       temperature: ctx.temperature || 0.7,
       maxOutputTokens: ctx.maxTokens || 4096,
       createdAt: new Date(ctx.ts || Date.now()).toISOString(),
@@ -1019,8 +1021,8 @@ module.exports = async function handler(req, res) {
         text: m.content || '',
         isCreatedByUser: m.role === 'user',
         sender: m.role === 'user' ? 'User' : (ctx.model || 'AI'),
-        model: m.role !== 'user' ? (ctx.model || 'nvidia/nemotron-nano-9b-v2:free') : undefined,
-        endpoint: ctx.endpoint || 'custom',
+        model: m.role !== 'user' ? (ctx.model || 'gemma4') : undefined,
+        endpoint: ctx.endpoint || 'Ollama',
         error: false,
         unfinished: false,
         createdAt: now,
