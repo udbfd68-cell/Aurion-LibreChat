@@ -129,11 +129,10 @@ export const router = createBrowserRouter(
               path: 'prompts/:promptId',
               lazy: loadInlinePromptsView,
             },
-            // Hidden for Claude.ai-like experience
-            // {
-            //   path: 'connectors',
-            //   element: <ConnectorsPage />,
-            // },
+            {
+              path: 'connectors',
+              element: <ConnectorsPage />,
+            },
             {
               path: 'agents',
               element: (
