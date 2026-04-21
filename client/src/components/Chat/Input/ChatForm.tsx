@@ -34,9 +34,11 @@ import StopButton from './StopButton';
 import SendButton from './SendButton';
 import EditBadges from './EditBadges';
 import IntentBadges from './IntentBadges';
+import MCPContextBadges from './MCPContextBadges';
 import BadgeRow from './BadgeRow';
 import Mention from './Mention';
 import { useIntentDetection } from '~/hooks/Chat';
+import { useMCPRouter } from '~/hooks/useMCPRouter';
 import store from '~/store';
 
 interface ChatFormProps {
@@ -185,6 +187,7 @@ const ChatForm = memo(function ChatForm({
 
   const textValue = useWatch({ control: methods.control, name: 'text' });
   const intentBadges = useIntentDetection(textValue ?? '');
+  const mcpMatches = useMCPRouter(textValue ?? '');
 
   useEffect(() => {
     if (textAreaRef.current) {
@@ -348,6 +351,7 @@ const ChatForm = memo(function ChatForm({
                 />
               </div>
               <IntentBadges intents={intentBadges} />
+              <MCPContextBadges matches={mcpMatches} />
               <BadgeRow
                 showEphemeralBadges={
                   !!endpoint && !isAgentsEndpoint(endpoint) && !isAssistantsEndpoint(endpoint)
