@@ -47,9 +47,13 @@ RUN \
     npm prune --production; \
     npm cache clean --force
 
+# Aurion: use pre-configured librechat.yaml with MCP servers + OAuth
+RUN cp /app/setup/librechat-aurion.yaml /app/librechat.yaml
+
 # Node API setup
 EXPOSE 3080
 ENV HOST=0.0.0.0
+ENV CONFIG_PATH=/app/librechat.yaml
 CMD ["npm", "run", "backend"]
 
 # Optional: for client with nginx routing
