@@ -338,6 +338,16 @@ async function runAgenticStream({ res, ctx, host }) {
   let toolContentIndex = 0;
   const toolCallParts = [];
 
+  // Keep the SSE connection warm: send a no-op comment every 10s so the CDN
+  // and the browser don't terminate it while the model is thinking or a tool
+  // is running.
+  const keepAlive = setInterval(() => {
+    try { res.write(': ping\n\n'); if (typeof res.flush === 'function') res.flush(); }
+    catch { /* socket already closed */ }
+  }, 10000);
+  const stopKeepAlive = () => { clearInterval(keepAlive); };
+  res.on('close', stopKeepAlive);
+
   sendSSE(res, {
     created: true,
     message: {
@@ -433,6 +443,7 @@ async function runAgenticStream({ res, ctx, host }) {
 
   if (lastError && !fullText) {
     sendSSEError(res, lastError);
+    stopKeepAlive();
     return res.end();
   }
 
@@ -469,6 +480,7 @@ async function runAgenticStream({ res, ctx, host }) {
   if (updatedMsgs.length > MAX_HISTORY) updatedMsgs.splice(0, updatedMsgs.length - MAX_HISTORY);
   global._orStore.set(ctx.conversationId, { ...ctx, messages: updatedMsgs, ts: Date.now() });
 
+  stopKeepAlive();
   return res.end();
 }
 

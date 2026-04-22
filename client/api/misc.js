@@ -6,6 +6,79 @@ import * as realTools from './real-tools.js';
 if (!global._projects) global._projects = [];
 if (!global._mcpServers) global._mcpServers = {};
 if (!global._mcpConnected) global._mcpConnected = {};
+
+/* ──────────────────────────────────────────────────────────────
+ * BOOTSTRAP DEFAULT MCP SERVERS
+ *
+ * Public SSE MCP endpoints that require no per-user authentication.
+ * Seeded on cold start so the /api/mcp/tools endpoint is never empty.
+ * Tool discovery runs lazily (first request) and is cached.
+ * ──────────────────────────────────────────────────────────────*/
+const DEFAULT_MCP_SERVERS = [
+  {
+    serverName: 'deepwiki',
+    title: 'DeepWiki',
+    description: 'Ask questions about any public GitHub repository.',
+    url: 'https://mcp.deepwiki.com/mcp',
+    type: 'streamable',
+  },
+  {
+    serverName: 'context7',
+    title: 'Context7',
+    description: 'Up-to-date library documentation and code examples.',
+    url: 'https://mcp.context7.com/mcp',
+    type: 'streamable',
+  },
+  {
+    serverName: 'gitmcp',
+    title: 'GitMCP',
+    description: 'Open-source project documentation and README search.',
+    url: 'https://gitmcp.io/docs',
+    type: 'streamable',
+  },
+];
+
+async function bootstrapDefaultMcpServers() {
+  if (global._mcpBootstrapped) return;
+  global._mcpBootstrapped = true;
+  for (const cfg of DEFAULT_MCP_SERVERS) {
+    if (global._mcpServers[cfg.serverName]) continue;
+    const server = {
+      dbId: crypto.randomUUID(),
+      serverName: cfg.serverName,
+      title: cfg.title,
+      description: cfg.description,
+      url: cfg.url,
+      type: cfg.type,
+      iconPath: '',
+      tools: [],
+      consumeOnly: false,
+    };
+    global._mcpServers[cfg.serverName] = server;
+    global._mcpConnected[cfg.serverName] = { requiresOAuth: false, connectionState: 'connecting' };
+    // Fire-and-forget discovery so cold-start isn't blocked.
+    discoverTools(cfg.url, 8000).then((result) => {
+      const mcpTools = (result.tools || []).map((t) => ({
+        name: t.name,
+        pluginKey: cfg.serverName + '_' + t.name,
+        description: t.description || '',
+        inputSchema: t.inputSchema || { type: 'object', properties: {} },
+      }));
+      server.tools = mcpTools;
+      global._mcpConnected[cfg.serverName] = { requiresOAuth: false, connectionState: 'connected' };
+      mcpTools.forEach((t) => {
+        global._mcpToolIndex[t.name] = { serverName: cfg.serverName, sseUrl: cfg.url };
+        global._mcpToolIndex[t.pluginKey] = { serverName: cfg.serverName, sseUrl: cfg.url, realName: t.name };
+      });
+    }).catch((err) => {
+      global._mcpConnected[cfg.serverName] = {
+        requiresOAuth: false,
+        connectionState: 'error',
+        error: (err && err.message) || 'Connection failed',
+      };
+    });
+  }
+}
 if (!global._mcpToolIndex) global._mcpToolIndex = {}; // toolName → { serverName, sseUrl }
 
 function uuid() { return crypto.randomUUID(); }
@@ -16,6 +89,9 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Ensure default MCP servers are registered on the first hit of any cold boot.
+  await bootstrapDefaultMcpServers();
 
   const type = req.query.type || '';
   const id = req.query.id || '';
@@ -207,18 +283,18 @@ export default async function handler(req, res) {
     const servers = {};
     Object.keys(global._mcpServers).forEach(function (key) {
       const s = global._mcpServers[key];
-      if (s.tools && s.tools.length > 0) {
-        servers[key] = {
-          name: s.title || s.serverName || key,
-          url: s.url || '',
-          icon: s.iconPath || '',
-          authenticated: true,
-          authConfig: [],
-          tools: s.tools.map(function (t) {
-            return { name: t.name, pluginKey: t.pluginKey || (key + '_' + t.name), description: t.description || '', inputSchema: t.inputSchema || null };
-          }),
-        };
-      }
+      // Include servers even if tools haven't been discovered yet so the UI
+      // can render them with a loading/connecting state.
+      servers[key] = {
+        name: s.title || s.serverName || key,
+        url: s.url || '',
+        icon: s.iconPath || '',
+        authenticated: true,
+        authConfig: [],
+        tools: (s.tools || []).map(function (t) {
+          return { name: t.name, pluginKey: t.pluginKey || (key + '_' + t.name), description: t.description || '', inputSchema: t.inputSchema || null };
+        }),
+      };
     });
     return res.status(200).json({ servers: servers });
   }
