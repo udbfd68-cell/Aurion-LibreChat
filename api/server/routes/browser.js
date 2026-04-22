@@ -131,10 +131,24 @@ router.post('/run', async (req, res) => {
 // GET /api/browser/health
 router.get('/health', async (req, res) => {
   try {
+    const fs = require('fs');
+    const candidates = [
+      process.env.CHROME_PATH,
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/usr/lib/chromium/chrome',
+      '/usr/lib/chromium/chromium',
+    ].filter(Boolean);
+    const found = candidates.map(p => ({ p, exists: (() => { try { return fs.existsSync(p); } catch { return false; } })() }));
+    let listBin = '';
+    try { listBin = fs.readdirSync('/usr/bin').filter(f => f.toLowerCase().includes('chrom')).join(','); } catch {}
     const browser = await getBrowser();
-    return res.json({ ok: true, connected: browser.isConnected(), chromePath: process.env.CHROME_PATH });
+    return res.json({ ok: true, connected: browser.isConnected(), chromePath: process.env.CHROME_PATH, candidates: found, usrBin: listBin });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message });
+    const fs = require('fs');
+    let listBin = '';
+    try { listBin = fs.readdirSync('/usr/bin').filter(f => f.toLowerCase().includes('chrom')).join(','); } catch {}
+    return res.status(500).json({ ok: false, error: e.message, chromePath: process.env.CHROME_PATH, usrBin: listBin });
   }
 });
 
