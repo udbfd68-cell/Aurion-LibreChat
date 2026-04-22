@@ -240,6 +240,31 @@ const ROUTING_RULES = [
     ],
   },
   {
+    serverName: 'playwright',
+    priority: 9,
+    keywords: [
+      // FR — navigation / automation web haute fiabilité
+      'navigue sur', 'va sur le site', 'ouvre le site', 'ouvre la page',
+      'va voir sur', 'visite', 'charge la page', 'charge le site',
+      'clique sur', 'remplis le formulaire', 'remplir le formulaire',
+      'connecte-toi au site', 'se connecter sur',
+      'extraire le contenu de', 'extrais le contenu', 'scrape', 'scraper',
+      'automatise le navigateur', 'test e2e', 'playwright',
+      'capture de la page', 'screenshot la page', 'screenshot de',
+      // FR — prospection / lead-gen (navigation haute fiabilité)
+      'prospection', 'prospect', 'prospecter', 'prospects',
+      'cherche des prospects', 'trouve des clients', 'generer des leads',
+      'leads', 'contact commercial', 'linkedin', 'sales navigator',
+      'profil linkedin', 'crunchbase', 'site web de l entreprise',
+      // EN
+      'browse to', 'go to the website', 'open the page', 'visit the page',
+      'navigate to', 'click the button', 'fill the form', 'login to the site',
+      'scrape the site', 'extract content from', 'automate the browser',
+      'prospecting', 'find leads', 'find prospects', 'lookup company',
+      'linkedin profile', 'sales navigator',
+    ],
+  },
+  {
     serverName: 'puppeteer',
     priority: 7,
     keywords: [

@@ -425,6 +425,26 @@ mcpServers:
       Browser automation: navigate, click, fill, screenshot, extract HTML.
       Use for scraping pages that require JS or interaction.
 
+  # ── BROWSER: PLAYWRIGHT MCP (Microsoft — real "computer-use" for any LLM) ──
+  # 31k+ stars. Uses Playwright's accessibility tree (NOT vision), works with
+  # any model including Ollama/gemma/local models. Deterministic, fast, no
+  # screenshots needed for the LLM to understand the page.
+  #
+  # This IS the real computer-use equivalent for non-Anthropic models.
+  playwright:
+    type: stdio
+    command: npx
+    args: ['-y', '@playwright/mcp@latest', '--isolated', '--headless', '--no-sandbox']
+    startup: false
+    serverInstructions: |
+      Model-agnostic browser automation using accessibility snapshots.
+      No vision/screenshots needed — the agent reads the page's semantic tree.
+      Tools: browser_navigate, browser_click, browser_type, browser_snapshot,
+      browser_select_option, browser_press_key, browser_wait_for, browser_evaluate,
+      browser_tab_new, browser_tab_close, browser_file_upload, etc.
+      PREFER this over puppeteer for reliability. Each session is isolated
+      (no cookie leak between users). Works on LinkedIn, Crunchbase, any SPA.
+
   # ── BROWSER: STAGEHAND (agentic "computer use" — goal-driven navigation) ──
   # High-level primitives: act(goal), observe(goal), extract(schema). Uses
   # Browserbase hosted Chrome or local fallback. Ideal for prospection,

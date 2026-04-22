@@ -17,6 +17,7 @@ const SERVER_ICONS: Record<string, React.ReactNode> = {
   filesystem: <HardDrive className="h-3 w-3" />,
   puppeteer: <Globe className="h-3 w-3" />,
   stagehand: <MousePointerClick className="h-3 w-3" />,
+  playwright: <MousePointerClick className="h-3 w-3" />,
 };
 
 const SERVER_LABELS: Record<string, string> = {
@@ -31,6 +32,7 @@ const SERVER_LABELS: Record<string, string> = {
   filesystem: 'Files',
   puppeteer: 'Browser',
   stagehand: 'Web Agent',
+  playwright: 'Web Browser',
 };
 
 export function MCPContextBadges({ activeServers }: MCPContextBadgesProps) {

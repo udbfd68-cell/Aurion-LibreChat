@@ -77,6 +77,13 @@ describe('MCPRouter.route', () => {
     expect(res3).toContain('puppeteer');
   });
 
+  it('activates playwright for web navigation (preferred over puppeteer)', () => {
+    const res = route('navigue sur le site de stripe et extrais le pricing');
+    expect(res).toContain('playwright');
+    const res2 = route('navigate to linkedin and login');
+    expect(res2).toContain('playwright');
+  });
+
   it('activates stagehand for multi-step agentic tasks', () => {
     expect(route('trouve-moi les 10 premieres entreprises SaaS en France')).toContain('stagehand');
     expect(route('log in then search and click the 3rd result')).toContain('stagehand');

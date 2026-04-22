@@ -228,6 +228,29 @@ const initializeClient = async ({ req, res, signal, endpointOption }) => {
           `[MCPRouter] Injected ${injectedCount} MCP tool(s) for user ${userId} ` +
             `(known=${knownServerNames.length}, contextual=[${contextualServers.join(',')}])`,
         );
+
+        // ── Connector auto-greeting: prepend a system note so the LLM
+        // knows it can use these tools WITHOUT waiting for the user to
+        // name them. This is what makes "click Gmail → ask 'my inbox'"
+        // work instead of the model saying "I don't have access".
+        const activeServers = [];
+        for (const serverName of allNames) {
+          const t = await getMCPServerTools(userId, serverName);
+          if (t) activeServers.push({ name: serverName, tools: Object.keys(t).length });
+        }
+        if (activeServers.length > 0) {
+          const serverSummary = activeServers
+            .map((s) => `  - ${s.name} (${s.tools} tools)`)
+            .join('\n');
+          const mcpPreamble =
+            `You have live access to the following connected services. ` +
+            `Use their tools proactively without asking for permission:\n${serverSummary}\n\n` +
+            `When the user mentions a task related to any of these (e.g. "show my emails", ` +
+            `"navigate to linkedin", "create a ticket"), invoke the relevant tool immediately ` +
+            `rather than describing what you would do.\n\n`;
+          primaryAgent.instructions =
+            mcpPreamble + (primaryAgent.instructions || '');
+        }
       }
     }
   } catch (err) {
