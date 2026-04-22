@@ -790,6 +790,15 @@ export default async function handler(req, res) {
       sendSSE(res, { event: 'on_message_delta', data: { id: stepId, delta: { content: [{ index: toolContentIndex, type: 'text', text: content }] } } });
     }
 
+    function processContent(chunk) {
+      flushText(chunk);
+    }
+
+    function flushThink(chunk) {
+      if (!chunk) return;
+      sendSSE(res, { event: 'on_reasoning_delta', data: { id: stepId, delta: { content: [{ type: 'text', text: chunk }] } } });
+    }
+
     await new Promise((resolve) => {
       const useOpenRouter = !!OPENROUTER_KEY;
       const host = useOpenRouter ? 'openrouter.ai' : 'ollama.com';
