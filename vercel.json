@@ -4,8 +4,8 @@
   "installCommand": "npm install --legacy-peer-deps",
   "framework": null,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://librechat-backend-qf8a.onrender.com/api/$1" },
-    { "source": "/oauth/(.*)", "destination": "https://librechat-backend-qf8a.onrender.com/oauth/$1" },
+    { "source": "/api/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/api/$1" },
+    { "source": "/oauth/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/oauth/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
