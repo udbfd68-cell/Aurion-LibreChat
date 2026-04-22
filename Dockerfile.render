@@ -59,6 +59,7 @@ RUN npm install -g --no-audit --no-fund \
       exa-mcp-server \
       firecrawl-mcp \
       server-perplexity-ask \
+      @browserbasehq/mcp-server-browserbase \
     || true
 
 # Use the Aurion-specific librechat.yaml config

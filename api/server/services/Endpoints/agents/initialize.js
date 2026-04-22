@@ -27,6 +27,7 @@ const { getModelsConfig } = require('~/server/controllers/ModelController');
 const { checkPermission } = require('~/server/services/PermissionService');
 const { route: mcpRoute } = require('~/server/services/MCP/MCPRouter');
 const { getMCPServerTools } = require('~/server/services/Config/getCachedTools');
+const { getMCPServersRegistry } = require('~/config');
 const AgentClient = require('~/server/controllers/agents/client');
 const { processAddedConvo } = require('./addedConvo');
 const { logViolation } = require('~/cache');
@@ -169,42 +170,68 @@ const initializeClient = async ({ req, res, signal, endpointOption }) => {
     throw new Error('Agent not found');
   }
 
-  // Contextual MCP tool injection — based on the current user message, add
-  // tools from matched MCP servers to the agent's tool list so the LLM can
-  // invoke them automatically without any manual user selection.
+  // ───────────────────────────────────────────────────────────
+  // MCP tool injection — two complementary layers:
+  //
+  //   (1) "Always-on": every MCP server the user has connected
+  //       (tools cached under TOOL_CACHE:MCP:<userId>:<serverName>)
+  //       is injected into primaryAgent.tools. So once the user
+  //       clicks Gmail → OAuth succeeds → Gmail tools are
+  //       automatically available to ALL agents.
+  //
+  //   (2) "Contextual": servers matched by the current message
+  //       via MCPRouter are injected too (catches stdio / startup:false
+  //       servers that haven't been pre-connected).
+  //
+  // Both layers are additive + de-duplicated. Silent on failure.
+  // ───────────────────────────────────────────────────────────
   try {
-    const userText =
-      typeof req.body?.text === 'string' && req.body.text.trim().length > 0
-        ? req.body.text
-        : typeof req.body?.promptPrefix === 'string'
-          ? req.body.promptPrefix
-          : '';
-    if (userText) {
-      const matchedServers = mcpRoute(userText);
-      if (matchedServers.length > 0) {
-        const userId = req.user?.id;
-        const existing = new Set(primaryAgent.tools ?? []);
-        const injected = [];
-        for (const serverName of matchedServers) {
-          const serverTools = userId ? await getMCPServerTools(userId, serverName) : null;
-          if (!serverTools) continue;
-          for (const toolKey of Object.keys(serverTools)) {
-            if (!existing.has(toolKey)) {
-              existing.add(toolKey);
-              injected.push(toolKey);
-            }
-          }
+    const userId = req.user?.id;
+    if (userId) {
+      const existing = new Set(primaryAgent.tools ?? []);
+      const beforeCount = existing.size;
+
+      // Layer 1: always-on — iterate all known MCP servers
+      let knownServerNames = [];
+      try {
+        const registry = getMCPServersRegistry();
+        const allServers = await registry.getAll(userId);
+        knownServerNames = Object.keys(allServers ?? {});
+      } catch (regErr) {
+        logger.debug('[MCPRouter] registry unavailable:', regErr?.message || regErr);
+      }
+
+      // Layer 2: contextual — servers matched by current message
+      const userText =
+        typeof req.body?.text === 'string' && req.body.text.trim().length > 0
+          ? req.body.text
+          : typeof req.body?.promptPrefix === 'string'
+            ? req.body.promptPrefix
+            : '';
+      const contextualServers = userText ? mcpRoute(userText) : [];
+
+      // Union (preserve order: known first, contextual appended)
+      const allNames = new Set([...knownServerNames, ...contextualServers]);
+
+      for (const serverName of allNames) {
+        const serverTools = await getMCPServerTools(userId, serverName);
+        if (!serverTools) continue; // user not connected to this server yet
+        for (const toolKey of Object.keys(serverTools)) {
+          existing.add(toolKey);
         }
-        if (injected.length > 0) {
-          primaryAgent.tools = Array.from(existing);
-          logger.debug(
-            `[MCPRouter] Injected ${injected.length} contextual tool(s) from servers [${matchedServers.join(', ')}] for user ${userId}`,
-          );
-        }
+      }
+
+      const injectedCount = existing.size - beforeCount;
+      if (injectedCount > 0) {
+        primaryAgent.tools = Array.from(existing);
+        logger.debug(
+          `[MCPRouter] Injected ${injectedCount} MCP tool(s) for user ${userId} ` +
+            `(known=${knownServerNames.length}, contextual=[${contextualServers.join(',')}])`,
+        );
       }
     }
   } catch (err) {
-    logger.warn('[MCPRouter] Failed to inject contextual MCP tools:', err?.message || err);
+    logger.warn('[MCPRouter] Failed to inject MCP tools:', err?.message || err);
   }
 
   const modelsConfig = await getModelsConfig(req);

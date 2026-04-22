@@ -222,11 +222,58 @@ const ROUTING_RULES = [
     ],
   },
   {
-    serverName: 'puppeteer',
-    priority: 3,
+    serverName: 'stagehand',
+    priority: 8,
     keywords: [
-      'capture d ecran', 'screenshot de la page',
-      'automatiser le navigateur', 'browser automation',
+      // FR — agentic multi-step
+      'navigue et extrait', 'connecte-toi puis', 'trouve-moi', 'trouve moi',
+      'recherche puis clique', 'fais une recherche sur',
+      'extrais les emails', 'extraire les contacts', 'liste les entreprises',
+      // FR — prospection haute intention
+      'prospection linkedin', 'prospecter sur linkedin',
+      'trouve des prospects', 'trouve-moi des clients',
+      'generer une liste de leads', 'qualifier des prospects',
+      // EN
+      'find me', 'log in then', 'search and click', 'extract from the site',
+      'prospect on linkedin', 'qualify leads', 'enrich prospects',
+      'agentic browsing', 'autonomous web',
+    ],
+  },
+  {
+    serverName: 'puppeteer',
+    priority: 7,
+    keywords: [
+      // FR — navigation web autonome
+      'navigue sur', 'va sur le site', 'va voir sur', 'ouvre le site',
+      'ouvre la page', 'ouvre l url', 'visite le site', 'visite la page',
+      'charge la page', 'extraire le contenu de', 'scrape', 'scraper',
+      'capture d ecran', 'screenshot de la page', 'screenshot de',
+      'automatiser le navigateur', 'clique sur le bouton', 'remplis le formulaire',
+      'connecte-toi au site', 'connecte toi a', 'se connecter sur',
+      // FR — prospection / recherche d entreprises / profils
+      'prospection', 'prospect', 'prospecter', 'prospects',
+      'cherche des prospects', 'trouve des clients', 'generer des leads',
+      'leads', 'contact commercial', 'linkedin', 'sales navigator',
+      'profil linkedin', 'entreprise sur linkedin', 'crunchbase',
+      'site web de l entreprise', 'site internet de', 'page contact',
+      // EN
+      'browse to', 'go to the website', 'open the page', 'visit the page',
+      'navigate to', 'browser automation', 'headless browser',
+      'screenshot the page', 'scrape the site', 'extract content from',
+      'click the button', 'fill the form', 'login to the site',
+      'prospecting', 'find leads', 'find prospects', 'generate leads',
+      'lookup company', 'linkedin profile', 'sales navigator',
+    ],
+  },
+  {
+    serverName: 'brave-search',
+    priority: 6,
+    keywords: [
+      // Already covered elsewhere but add prospection variants
+      'cherche sur internet', 'cherche sur google', 'recherche web',
+      'trouve moi des', 'recherche des entreprises', 'recherche sur le web',
+      'search the web', 'google search', 'web search', 'look up online',
+      'find companies', 'find businesses',
     ],
   },
   {

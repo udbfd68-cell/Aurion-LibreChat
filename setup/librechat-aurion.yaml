@@ -425,6 +425,29 @@ mcpServers:
       Browser automation: navigate, click, fill, screenshot, extract HTML.
       Use for scraping pages that require JS or interaction.
 
+  # ── BROWSER: STAGEHAND (agentic "computer use" — goal-driven navigation) ──
+  # High-level primitives: act(goal), observe(goal), extract(schema). Uses
+  # Browserbase hosted Chrome or local fallback. Ideal for prospection,
+  # LinkedIn, form filling, multi-step workflows that puppeteer can't handle.
+  stagehand:
+    type: stdio
+    command: npx
+    args: ['-y', '@browserbasehq/mcp-server-browserbase']
+    startup: false
+    serverInstructions: |
+      Agentic browser automation. Prefer over puppeteer for:
+        - multi-step workflows ("login, search, click the 3rd result, extract email")
+        - prospection / lead generation on LinkedIn, Crunchbase, company sites
+        - any task where the target DOM is not known in advance.
+      Tools: stagehand_navigate, stagehand_act, stagehand_observe, stagehand_extract.
+    customUserVars:
+      BROWSERBASE_API_KEY:
+        title: 'Browserbase API Key'
+        description: 'Get free key (3000 min/month) at https://browserbase.com → Settings → API Keys'
+      BROWSERBASE_PROJECT_ID:
+        title: 'Browserbase Project ID'
+        description: 'Browserbase dashboard → Project Settings'
+
   # ── REASONING: SEQUENTIAL THINKING (step-by-step problem solving) ──
   sequential-thinking:
     type: stdio

@@ -59,4 +59,26 @@ describe('MCPRouter.route', () => {
     expect(names).toContain('gmail');
     expect(names).toContain('github');
   });
+
+  it('activates puppeteer for explicit browser automation', () => {
+    expect(route('prends un screenshot de la page home')).toContain('puppeteer');
+    expect(route('screenshot the page then extract content')).toContain('puppeteer');
+  });
+
+  it('activates puppeteer or stagehand for prospection / LinkedIn', () => {
+    const res1 = route('trouve moi des prospects sur linkedin');
+    expect(res1.length).toBeGreaterThan(0);
+    expect(res1.some((s) => s === 'puppeteer' || s === 'stagehand')).toBe(true);
+
+    const res2 = route('qualifier des leads depuis sales navigator');
+    expect(res2.length).toBeGreaterThan(0);
+
+    const res3 = route('navigue sur le site de stripe et extrais le pricing');
+    expect(res3).toContain('puppeteer');
+  });
+
+  it('activates stagehand for multi-step agentic tasks', () => {
+    expect(route('trouve-moi les 10 premieres entreprises SaaS en France')).toContain('stagehand');
+    expect(route('log in then search and click the 3rd result')).toContain('stagehand');
+  });
 });

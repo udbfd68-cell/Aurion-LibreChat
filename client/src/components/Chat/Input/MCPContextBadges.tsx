@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, HardDrive, Calendar, Layout, Github, MessageSquare, FileText, Search } from 'lucide-react';
+import { Mail, HardDrive, Calendar, Layout, Github, MessageSquare, FileText, Search, Globe, MousePointerClick } from 'lucide-react';
 
 interface MCPContextBadgesProps {
   activeServers: string[];
@@ -15,6 +15,8 @@ const SERVER_ICONS: Record<string, React.ReactNode> = {
   notion: <FileText className="h-3 w-3" />,
   'brave-search': <Search className="h-3 w-3" />,
   filesystem: <HardDrive className="h-3 w-3" />,
+  puppeteer: <Globe className="h-3 w-3" />,
+  stagehand: <MousePointerClick className="h-3 w-3" />,
 };
 
 const SERVER_LABELS: Record<string, string> = {
@@ -27,6 +29,8 @@ const SERVER_LABELS: Record<string, string> = {
   notion: 'Notion',
   'brave-search': 'Search',
   filesystem: 'Files',
+  puppeteer: 'Browser',
+  stagehand: 'Web Agent',
 };
 
 export function MCPContextBadges({ activeServers }: MCPContextBadgesProps) {
