@@ -158,13 +158,6 @@ mcpServers:
       Use it when the user asks about recent events or needs web search.
 
 # ==========================================
-# AGENTS — Global Configuration
-# ==========================================
-agents:
-  artifacts: true
-  recursiveRun: true
-
-# ==========================================
 # ENDPOINTS — LLM Providers
 # ==========================================
 endpoints:
