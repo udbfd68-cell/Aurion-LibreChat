@@ -276,18 +276,26 @@ async function executeTool(name, args, host) {
 
 function callOpenRouterSync(model, messages, tools, temperature, maxTokens) {
   const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
+  const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
+  const useOpenRouter = !!OPENROUTER_KEY;
+  const hostname = useOpenRouter ? 'openrouter.ai' : 'ollama.com';
+  const path = useOpenRouter ? '/api/v1/chat/completions' : '/v1/chat/completions';
+  const authKey = useOpenRouter ? OPENROUTER_KEY : OLLAMA_API_KEY;
+  const extraHeaders = useOpenRouter
+    ? { 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat' }
+    : {};
   const reqBody = JSON.stringify({ model, messages, tools, temperature, max_tokens: maxTokens });
   return new Promise((resolve) => {
     const apiReq = https.request({
-      hostname: 'openrouter.ai', path: '/api/v1/chat/completions', method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENROUTER_KEY, 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat', 'Content-Length': Buffer.byteLength(reqBody) },
+      hostname, path, method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authKey, 'Content-Length': Buffer.byteLength(reqBody), ...extraHeaders },
     }, (apiRes) => {
       let data = '';
       apiRes.on('data', c => data += c);
       apiRes.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve({ error: data }); } });
     });
     apiReq.on('error', e => resolve({ error: e.message }));
-    apiReq.setTimeout(30000, () => { apiReq.destroy(); resolve({ error: 'timeout' }); });
+    apiReq.setTimeout(60000, () => { apiReq.destroy(); resolve({ error: 'timeout' }); });
     apiReq.write(reqBody);
     apiReq.end();
   });
@@ -307,7 +315,7 @@ export default async function handler(req, res) {
   // ═══ DIRECT: Single-request SSE (frontend POST → immediate SSE response) ═══
   if (action === 'direct' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'nvidia/nemotron-nano-9b-v2:free';
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gpt-oss:120b';
     const text = body.text || body.editedContent || '';
     const userMessageId = body.messageId || uuid();
     const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
@@ -524,7 +532,7 @@ export default async function handler(req, res) {
   // ═══ POST: Start Chat ═══
   if (action === 'post' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'nvidia/nemotron-nano-9b-v2:free';
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gpt-oss:120b';
     const text = body.text || body.editedContent || '';
     const userMessageId = body.messageId || uuid();
     const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
@@ -914,13 +922,13 @@ export default async function handler(req, res) {
     const convoId = req.query.convoId || '';
     cleanStore();
     const ctx = global._orStore.get(convoId);
-    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'nvidia/nemotron-nano-9b-v2:free', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'gpt-oss:120b', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     const firstUserMsg = ctx.messages?.find(m => m.role === 'user');
     return res.status(200).json({
       conversationId: convoId,
       title: firstUserMsg ? firstUserMsg.content.substring(0, 60) : 'New Chat',
       endpoint: ctx.endpoint || 'custom',
-      model: ctx.model || 'nvidia/nemotron-nano-9b-v2:free',
+      model: ctx.model || 'gpt-oss:120b',
       temperature: ctx.temperature || 0.7,
       maxOutputTokens: ctx.maxTokens || 4096,
       createdAt: new Date(ctx.ts || Date.now()).toISOString(),
@@ -949,7 +957,7 @@ export default async function handler(req, res) {
         text: m.content || '',
         isCreatedByUser: m.role === 'user',
         sender: m.role === 'user' ? 'User' : (ctx.model || 'AI'),
-        model: m.role !== 'user' ? (ctx.model || 'nvidia/nemotron-nano-9b-v2:free') : undefined,
+        model: m.role !== 'user' ? (ctx.model || 'gpt-oss:120b') : undefined,
         endpoint: ctx.endpoint || 'custom',
         error: false,
         unfinished: false,
