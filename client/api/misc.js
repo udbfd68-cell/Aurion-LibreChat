@@ -15,6 +15,7 @@ if (!global._mcpConnected) global._mcpConnected = {};
  * Tool discovery runs lazily (first request) and is cached.
  * ──────────────────────────────────────────────────────────────*/
 const DEFAULT_MCP_SERVERS = [
+  // ── Public / no-auth ──────────────────────────────────────────────
   {
     serverName: 'deepwiki',
     title: 'DeepWiki',
@@ -36,6 +37,57 @@ const DEFAULT_MCP_SERVERS = [
     url: 'https://gitmcp.io/docs',
     type: 'streamable',
   },
+  // ── OAuth-based (user must authorize in the UI) ───────────────────
+  // These are listed here so they appear in the Tools menu; the OAuth
+  // handshake happens on the LibreChat side when the user clicks them.
+  {
+    serverName: 'linear',
+    title: 'Linear',
+    description: 'Project management: issues, projects, cycles, roadmaps.',
+    url: 'https://mcp.linear.app/mcp',
+    type: 'streamable',
+    requiresOAuth: true,
+  },
+  {
+    serverName: 'notion',
+    title: 'Notion',
+    description: 'Notes and databases. Read, create, and update pages.',
+    url: 'https://mcp.notion.com/mcp',
+    type: 'streamable',
+    requiresOAuth: true,
+  },
+  {
+    serverName: 'paypal',
+    title: 'PayPal',
+    description: 'Payments, invoices and transaction management.',
+    url: 'https://mcp.paypal.com/sse',
+    type: 'sse',
+    requiresOAuth: true,
+  },
+  {
+    serverName: 'atlassian',
+    title: 'Atlassian (Jira + Confluence)',
+    description: 'Issues, projects and documentation across Atlassian Cloud.',
+    url: 'https://mcp.atlassian.com/v1/sse',
+    type: 'sse',
+    requiresOAuth: true,
+  },
+  {
+    serverName: 'clickhouse',
+    title: 'ClickHouse',
+    description: 'Analytical queries on large datasets.',
+    url: 'https://mcp.clickhouse.cloud/mcp',
+    type: 'streamable',
+    requiresOAuth: true,
+  },
+  {
+    serverName: 'hubspot',
+    title: 'HubSpot CRM',
+    description: 'Contacts, companies, deals, and marketing campaigns.',
+    url: 'https://mcp.hubspot.com/anthropic',
+    type: 'streamable',
+    requiresOAuth: true,
+  },
 ];
 
 async function bootstrapDefaultMcpServers() {
@@ -53,9 +105,17 @@ async function bootstrapDefaultMcpServers() {
       iconPath: '',
       tools: [],
       consumeOnly: false,
+      requiresOAuth: !!cfg.requiresOAuth,
     };
     global._mcpServers[cfg.serverName] = server;
-    global._mcpConnected[cfg.serverName] = { requiresOAuth: false, connectionState: 'connecting' };
+    global._mcpConnected[cfg.serverName] = {
+      requiresOAuth: !!cfg.requiresOAuth,
+      connectionState: cfg.requiresOAuth ? 'disconnected' : 'connecting',
+    };
+    // Only probe servers that accept unauthenticated discovery. OAuth-gated
+    // servers would return 401 and spam the connected map with errors; we
+    // let the UI trigger the auth flow instead.
+    if (cfg.requiresOAuth) continue;
     // Fire-and-forget discovery so cold-start isn't blocked.
     discoverTools(cfg.url, 8000).then((result) => {
       const mcpTools = (result.tools || []).map((t) => ({

@@ -52,15 +52,41 @@ const extractMessageContent = (message: TMessage): string => {
         if (typeof part === 'string') {
           return part;
         }
+        // Text parts: `text` can be a string OR an object shaped like
+        // `{ value: string }` when produced by the agent pipeline. Returning
+        // the raw object here would make `.join('')` coerce it to the
+        // literal string "[object Object]" (which is what users saw when
+        // exporting a tool-using assistant message to PDF or Gmail).
         if ('text' in part) {
-          return part.text || '';
+          const t = (part as { text: unknown }).text;
+          if (typeof t === 'string') return t;
+          if (t && typeof t === 'object' && 'value' in (t as Record<string, unknown>)) {
+            const v = (t as { value: unknown }).value;
+            return typeof v === 'string' ? v : '';
+          }
+          return '';
         }
         if ('think' in part) {
-          const think = part.think;
+          const think = (part as { think: unknown }).think;
           if (typeof think === 'string') {
             return think;
           }
-          return think && 'text' in think ? think.text || '' : '';
+          if (think && typeof think === 'object' && 'text' in (think as Record<string, unknown>)) {
+            const tt = (think as { text: unknown }).text;
+            return typeof tt === 'string' ? tt : '';
+          }
+          return '';
+        }
+        // Tool call parts: surface the tool output so exported content is not
+        // empty when the assistant used a tool (e.g. web_search).
+        if ('tool_call' in part) {
+          const tc = (part as { tool_call?: { output?: unknown } }).tool_call;
+          const out = tc && tc.output;
+          if (typeof out === 'string') return out;
+          if (out != null) {
+            try { return JSON.stringify(out); } catch { return ''; }
+          }
+          return '';
         }
         return '';
       })
