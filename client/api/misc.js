@@ -390,7 +390,7 @@ export default async function handler(req, res) {
               conversationId: cid,
               title: firstMsg ? firstMsg.content.substring(0, 60) : 'New Chat',
               endpoint: ctx.endpoint || 'custom',
-              model: ctx.model || 'gemma4:31b',
+              model: ctx.model || 'gemma4',
               createdAt: new Date(ctx.ts || Date.now()).toISOString(),
               updatedAt: new Date(ctx.ts || Date.now()).toISOString(),
             });
@@ -407,7 +407,7 @@ export default async function handler(req, res) {
   if (type === 'convo-detail') {
     const convoId = req.query.convoId || '';
     const ctx = global._orStore?.get(convoId);
-    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'gemma4:31b', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'gemma4', model: 'gemma4', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     const firstUserMsg = ctx.messages?.find(m => m.role === 'user');
     return res.status(200).json({
       conversationId: convoId,
@@ -443,7 +443,7 @@ export default async function handler(req, res) {
         text: m.content || '',
         isCreatedByUser: m.role === 'user',
         sender: m.role === 'user' ? 'User' : (ctx.model || 'AI'),
-        model: m.role !== 'user' ? (ctx.model || 'gemma4:31b') : undefined,
+        model: m.role !== 'user' ? (ctx.model || 'gemma4') : undefined,
         endpoint: ctx.endpoint || 'custom',
         error: false,
         unfinished: false,
