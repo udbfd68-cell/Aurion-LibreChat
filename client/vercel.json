@@ -40,6 +40,6 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/api/$1" },
     { "source": "/oauth/(.*)", "destination": "https://librechat-api-ew3n.onrender.com/oauth/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|favicon|manifest|sw\\.js|robots|librechat\\.yaml|apple-touch-icon|workbox-|.*\\.(?:js|css|png|jpg|jpeg|webp|svg|ico|woff2?|ttf|map|json|txt|xml|webmanifest)).*)", "destination": "/index.html" }
   ]
 }

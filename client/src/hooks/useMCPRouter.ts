@@ -22,6 +22,11 @@ export interface RouterMatch {
 const DEBOUNCE_MS = 400;
 const MIN_LEN = 3;
 
+// Process-wide cache: if the backend responds 404 (endpoint not wired), stop
+// hitting it for the remainder of the session. This silences console spam on
+// older backends while keeping the client-side heuristic working.
+let serverRoutingAvailable = true;
+
 export function useMCPRouter(text: string): RouterMatch[] {
   const [matches, setMatches] = useState<RouterMatch[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -41,6 +46,14 @@ export function useMCPRouter(text: string): RouterMatch[] {
       const ctrl = new AbortController();
       abortRef.current = ctrl;
 
+      // Skip network call entirely if we've already learned the backend
+      // doesn't expose the routing endpoint.
+      if (!serverRoutingAvailable) {
+        const fallback: DetectedIntent[] = detectIntents(trimmed);
+        setMatches(fallback.map((m) => ({ id: m.id, label: m.label, icon: m.icon })));
+        return;
+      }
+
       try {
         const res = await fetch('/api/mcp/route/preview', {
           method: 'POST',
@@ -49,6 +62,10 @@ export function useMCPRouter(text: string): RouterMatch[] {
           signal: ctrl.signal,
           credentials: 'include',
         });
+        if (res.status === 404) {
+          serverRoutingAvailable = false;
+          throw new Error('404');
+        }
         if (!res.ok) throw new Error(String(res.status));
         const data = await res.json();
         if (Array.isArray(data?.matches)) {
