@@ -213,42 +213,23 @@ export default async function handler(req, res) {
     endpointsConfig = backendResult.data;
   }
 
-  // Primary endpoint: agents (for Agent Builder)
+  // Primary (and only) endpoint: agents. Removed the old "Custom" category
+  // since everything routes through the Aurion agent pipeline.
   endpointsConfig['agents'] = {
     type: 'agents',
     disableBuilder: false,
     order: 1,
-    models: OPENROUTER_MODELS,
+    models: ['gemma4', ...OPENROUTER_MODELS],
     capabilities: ['tools', 'actions', 'execute_code', 'file_search'],
   };
 
-  // Custom endpoints array (LibreChat expects 'custom' as array of named endpoints)
-  endpointsConfig['custom'] = [
-    {
-      name: 'Aurion AI',
-      type: 'custom',
-      userProvide: false,
-      userProvideURL: false,
-      modelDisplayLabel: 'Aurion',
-      models: OPENROUTER_MODELS,
-      order: 0,
-      iconURL: '/assets/aurion-icon.png',
-      apiKey: 'aurion',
-      baseURL: '/api/orchat',
-    },
-    {
-      name: 'OpenRouter',
-      type: 'custom',
-      userProvide: false,
-      userProvideURL: false,
-      modelDisplayLabel: 'OpenRouter',
-      models: OPENROUTER_MODELS,
-      order: 2,
-      iconURL: '/assets/openrouter-icon.png',
-      apiKey: 'aurion',
-      baseURL: '/api/orchat',
-    },
-  ];
+  // Remove any leftover custom endpoints that may come from the backend.
+  delete endpointsConfig['custom'];
+  delete endpointsConfig['openAI'];
+  delete endpointsConfig['anthropic'];
+  delete endpointsConfig['google'];
+  delete endpointsConfig['azureOpenAI'];
+  delete endpointsConfig['assistants'];
 
   res.status(200).json(endpointsConfig);
 };
