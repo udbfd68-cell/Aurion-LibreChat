@@ -460,6 +460,9 @@ mcpServers:
         - prospection / lead generation on LinkedIn, Crunchbase, company sites
         - any task where the target DOM is not known in advance.
       Tools: stagehand_navigate, stagehand_act, stagehand_observe, stagehand_extract.
+      ALWAYS call multi_browserbase_stagehand_session_create FIRST and include
+      the full debuggerUrl / sessionUrl in your reply text. The UI renders it
+      as a live iframe so the user can watch the browser in real-time.
     customUserVars:
       BROWSERBASE_API_KEY:
         title: 'Browserbase API Key'

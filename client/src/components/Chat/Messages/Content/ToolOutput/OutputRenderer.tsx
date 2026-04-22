@@ -3,6 +3,7 @@ import copy from 'copy-to-clipboard';
 import CopyButton from '~/components/Messages/Content/CopyButton';
 import { useLocalize } from '~/hooks';
 import { cn } from '~/utils';
+import LiveBrowserView, { detectLiveBrowserUrl } from './LiveBrowserView';
 
 interface ContentBlock {
   type?: string;
@@ -92,6 +93,7 @@ interface OutputRendererProps {
 export default function OutputRenderer({ text }: OutputRendererProps) {
   const localize = useLocalize();
   const { text: displayText, rawError, error, isJson } = useMemo(() => extractText(text), [text]);
+  const liveUrl = useMemo(() => detectLiveBrowserUrl(text), [text]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -102,7 +104,7 @@ export default function OutputRenderer({ text }: OutputRendererProps) {
     setTimeout(() => setIsCopied(false), 3000);
   }, [displayText]);
 
-  if (!displayText) {
+  if (!displayText && !liveUrl) {
     return null;
   }
 
@@ -114,6 +116,7 @@ export default function OutputRenderer({ text }: OutputRendererProps) {
 
   return (
     <div className="relative">
+      {liveUrl && <LiveBrowserView url={liveUrl} />}
       {isJson ? (
         <pre className="max-h-[300px] overflow-auto rounded text-xs">
           <code className="hljs language-json !whitespace-pre-wrap !break-words">
