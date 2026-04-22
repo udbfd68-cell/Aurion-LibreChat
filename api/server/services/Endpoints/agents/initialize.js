@@ -25,6 +25,8 @@ const { loadAgentTools, loadToolsForExecution } = require('~/server/services/Too
 const { filterFilesByAgentAccess } = require('~/server/services/Files/permissions');
 const { getModelsConfig } = require('~/server/controllers/ModelController');
 const { checkPermission } = require('~/server/services/PermissionService');
+const { route: mcpRoute } = require('~/server/services/MCP/MCPRouter');
+const { getMCPServerTools } = require('~/server/services/Config/getCachedTools');
 const AgentClient = require('~/server/controllers/agents/client');
 const { processAddedConvo } = require('./addedConvo');
 const { logViolation } = require('~/cache');
@@ -165,6 +167,44 @@ const initializeClient = async ({ req, res, signal, endpointOption }) => {
   delete endpointOption.agent;
   if (!primaryAgent) {
     throw new Error('Agent not found');
+  }
+
+  // Contextual MCP tool injection — based on the current user message, add
+  // tools from matched MCP servers to the agent's tool list so the LLM can
+  // invoke them automatically without any manual user selection.
+  try {
+    const userText =
+      typeof req.body?.text === 'string' && req.body.text.trim().length > 0
+        ? req.body.text
+        : typeof req.body?.promptPrefix === 'string'
+          ? req.body.promptPrefix
+          : '';
+    if (userText) {
+      const matchedServers = mcpRoute(userText);
+      if (matchedServers.length > 0) {
+        const userId = req.user?.id;
+        const existing = new Set(primaryAgent.tools ?? []);
+        const injected = [];
+        for (const serverName of matchedServers) {
+          const serverTools = userId ? await getMCPServerTools(userId, serverName) : null;
+          if (!serverTools) continue;
+          for (const toolKey of Object.keys(serverTools)) {
+            if (!existing.has(toolKey)) {
+              existing.add(toolKey);
+              injected.push(toolKey);
+            }
+          }
+        }
+        if (injected.length > 0) {
+          primaryAgent.tools = Array.from(existing);
+          logger.debug(
+            `[MCPRouter] Injected ${injected.length} contextual tool(s) from servers [${matchedServers.join(', ')}] for user ${userId}`,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn('[MCPRouter] Failed to inject contextual MCP tools:', err?.message || err);
   }
 
   const modelsConfig = await getModelsConfig(req);

@@ -42,6 +42,25 @@ COPY --from=builder /app .
 
 RUN touch .env && mkdir -p /app/logs /app/uploads
 
+# Preinstall MCP server packages globally so `npx` in librechat.yaml
+# mcpServers.*.command resolves instantly at runtime without network calls.
+RUN npm install -g --no-audit --no-fund \
+      @modelcontextprotocol/server-filesystem \
+      @modelcontextprotocol/server-github \
+      @modelcontextprotocol/server-brave-search \
+      @modelcontextprotocol/server-puppeteer \
+      @modelcontextprotocol/server-sequential-thinking \
+      @modelcontextprotocol/server-memory \
+      @modelcontextprotocol/server-postgres \
+      @modelcontextprotocol/server-slack \
+      @modelcontextprotocol/server-gitlab \
+      @modelcontextprotocol/server-google-maps \
+      tavily-mcp \
+      exa-mcp-server \
+      firecrawl-mcp \
+      server-perplexity-ask \
+    || true
+
 # Use the Aurion-specific librechat.yaml config
 RUN cp /app/setup/librechat-aurion.yaml /app/librechat.yaml
 

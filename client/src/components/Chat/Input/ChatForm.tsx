@@ -196,11 +196,9 @@ const ChatForm = memo(function ChatForm({
     }
   }, [textValue]);
 
-  // Route MCP servers based on message content
+  // Route MCP servers based on message content (hook handles empty → clears badges).
   useEffect(() => {
-    if (textValue && textValue.length > 0) {
-      routeMCPMessage(textValue);
-    }
+    routeMCPMessage(textValue ?? '');
   }, [textValue, routeMCPMessage]);
 
   useEffect(() => {
