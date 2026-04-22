@@ -63,19 +63,11 @@ export default async function handler(req, res) {
     modelSelect: true,
   };
 
-  // Configure endpoints with proper model names
-  config.endpoints = [
-    {
-      name: 'gemma4',
-      type: 'custom',
-      iconURL: '/assets/aurion.svg',
-      models: {
-        default: ['gemma4', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b', 'gemma3:27b'],
-        fetch: false,
-      },
-      modelDisplayLabel: 'gemma4',
-    },
-  ];
+  // Only expose Agents - no raw "Custom" endpoint in the picker.
+  // The Aurion Assistant agent already defaults to gemma4, so users pick
+  // the agent and get gemma4 automatically.
+  config.endpoints = [];
+  config.endpointsConfig = config.endpointsConfig || {};
 
   res.status(200).json(config);
 };
