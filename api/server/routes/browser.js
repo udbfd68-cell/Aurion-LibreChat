@@ -130,25 +130,26 @@ router.post('/run', async (req, res) => {
 
 // GET /api/browser/health
 router.get('/health', async (req, res) => {
+  const fs = require('fs');
+  const { execSync } = require('child_process');
+  const sh = (cmd) => { try { return execSync(cmd, { timeout: 3000 }).toString().trim(); } catch (e) { return `ERR: ${e.message}`; } };
+  const debug = {
+    chromePath: process.env.CHROME_PATH,
+    which_chromium: sh('which chromium || true'),
+    which_chromium_browser: sh('which chromium-browser || true'),
+    usrBin_chrom: sh("ls -1 /usr/bin 2>/dev/null | grep -i chrom || true"),
+    usrLib_chrom: sh("ls -1 /usr/lib 2>/dev/null | grep -i chrom || true"),
+    find_chromium: sh("find / -maxdepth 6 -name 'chromium*' -o -name 'chrome*' 2>/dev/null | head -20 || true"),
+    apk_installed: sh("apk info 2>/dev/null | grep -i chrom || true"),
+    node_version: process.version,
+    platform: process.platform,
+    uid: process.getuid && process.getuid(),
+  };
   try {
-    const fs = require('fs');
-    const candidates = [
-      process.env.CHROME_PATH,
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/usr/lib/chromium/chrome',
-      '/usr/lib/chromium/chromium',
-    ].filter(Boolean);
-    const found = candidates.map(p => ({ p, exists: (() => { try { return fs.existsSync(p); } catch { return false; } })() }));
-    let listBin = '';
-    try { listBin = fs.readdirSync('/usr/bin').filter(f => f.toLowerCase().includes('chrom')).join(','); } catch {}
     const browser = await getBrowser();
-    return res.json({ ok: true, connected: browser.isConnected(), chromePath: process.env.CHROME_PATH, candidates: found, usrBin: listBin });
+    return res.json({ ok: true, connected: browser.isConnected(), debug });
   } catch (e) {
-    const fs = require('fs');
-    let listBin = '';
-    try { listBin = fs.readdirSync('/usr/bin').filter(f => f.toLowerCase().includes('chrom')).join(','); } catch {}
-    return res.status(500).json({ ok: false, error: e.message, chromePath: process.env.CHROME_PATH, usrBin: listBin });
+    return res.status(500).json({ ok: false, error: e.message, debug });
   }
 });
 
