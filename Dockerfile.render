@@ -63,14 +63,14 @@ RUN npm install -g --no-audit --no-fund \
       @playwright/mcp \
     || true
 
-# Install Chromium for Playwright MCP (needed by @playwright/mcp at runtime)
+# Install Chromium for Playwright (required by both @playwright/mcp and the
+# /api/browser/run route). Fail the build if apk add fails — don't mask errors.
 RUN apk add --no-cache chromium chromium-chromedriver nss freetype harfbuzz ca-certificates ttf-freefont \
-    && PLAYWRIGHT_BROWSERS_PATH=/ms-playwright npx --yes playwright install chromium --with-deps 2>/dev/null || true \
-    && (ls -la /usr/bin/chromium* || true)
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
-# Alpine package installs as /usr/bin/chromium (no -browser suffix on newer versions)
-ENV CHROME_PATH=/usr/bin/chromium
+    && ls -la /usr/bin/chromium* \
+    && (for p in /usr/bin/chromium /usr/bin/chromium-browser /usr/lib/chromium/chromium; do \
+         if [ -x "$p" ]; then echo "FOUND_CHROMIUM=$p"; break; fi; \
+       done)
+ENV CHROME_PATH=/usr/bin/chromium-browser
 
 # Use the Aurion-specific librechat.yaml config
 RUN cp /app/setup/librechat-aurion.yaml /app/librechat.yaml
