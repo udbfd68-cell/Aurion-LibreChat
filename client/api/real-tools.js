@@ -924,10 +924,18 @@ function indexDocument(id, name, content, type) {
    Actions: goto, click, type, press, wait, content, screenshot, snapshot
    ═══════════════════════════════════════════════════ */
 async function webBrowser(args) {
-  // Accept either {url, action} shortcut or {actions: [...]}
+  // Accept {actions:[...]}, {actionsJson:"[...]"}, or {url, action} shortcut
   let actions = [];
   if (Array.isArray(args && args.actions)) {
     actions = args.actions;
+  } else if (args && typeof args.actionsJson === 'string') {
+    try {
+      const parsed = JSON.parse(args.actionsJson);
+      if (Array.isArray(parsed)) actions = parsed;
+      else return JSON.stringify({ error: 'actionsJson must parse to an array' });
+    } catch (e) {
+      return JSON.stringify({ error: 'invalid actionsJson: ' + e.message });
+    }
   } else if (args && args.url) {
     actions.push({ type: 'goto', url: args.url });
     const action = (args.action || 'content').toLowerCase();
@@ -937,7 +945,7 @@ async function webBrowser(args) {
     else if (action === 'snapshot') actions.push({ type: 'snapshot' });
     else actions.push({ type: 'content' });
   } else {
-    return JSON.stringify({ error: 'webBrowser requires either {url, action} or {actions: [...]}' });
+    return JSON.stringify({ error: 'webBrowser requires {url, action}, {actionsJson}, or {actions:[...]}' });
   }
 
   const backend = process.env.RENDER_BACKEND_URL || 'https://librechat-api-ew3n.onrender.com';
