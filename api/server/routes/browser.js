@@ -16,9 +16,20 @@ let browserInstance = null;
 async function getBrowser() {
   const playwright = require('playwright-core');
   if (browserInstance && browserInstance.isConnected()) return browserInstance;
-  const executablePath = process.env.CHROME_PATH || '/usr/bin/chromium-browser';
+  const fs = require('fs');
+  const candidates = [
+    process.env.CHROME_PATH,
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+  ].filter(Boolean);
+  let executablePath;
+  for (const p of candidates) {
+    try { if (fs.existsSync(p)) { executablePath = p; break; } } catch {}
+  }
   browserInstance = await playwright.chromium.launch({
-    executablePath,
+    ...(executablePath ? { executablePath } : {}),
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
