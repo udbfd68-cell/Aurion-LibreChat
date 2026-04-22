@@ -390,7 +390,7 @@ export default async function handler(req, res) {
               conversationId: cid,
               title: firstMsg ? firstMsg.content.substring(0, 60) : 'New Chat',
               endpoint: ctx.endpoint || 'custom',
-              model: ctx.model || 'nvidia/nemotron-nano-9b-v2:free',
+              model: ctx.model || 'gpt-oss:120b',
               createdAt: new Date(ctx.ts || Date.now()).toISOString(),
               updatedAt: new Date(ctx.ts || Date.now()).toISOString(),
             });
@@ -407,7 +407,7 @@ export default async function handler(req, res) {
   if (type === 'convo-detail') {
     const convoId = req.query.convoId || '';
     const ctx = global._orStore?.get(convoId);
-    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'nvidia/nemotron-nano-9b-v2:free', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'gpt-oss:120b', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     const firstUserMsg = ctx.messages?.find(m => m.role === 'user');
     return res.status(200).json({
       conversationId: convoId,
@@ -443,7 +443,7 @@ export default async function handler(req, res) {
         text: m.content || '',
         isCreatedByUser: m.role === 'user',
         sender: m.role === 'user' ? 'User' : (ctx.model || 'AI'),
-        model: m.role !== 'user' ? (ctx.model || 'nvidia/nemotron-nano-9b-v2:free') : undefined,
+        model: m.role !== 'user' ? (ctx.model || 'gpt-oss:120b') : undefined,
         endpoint: ctx.endpoint || 'custom',
         error: false,
         unfinished: false,
