@@ -396,6 +396,10 @@ async function runAgenticStream({ res, ctx, host }) {
     });
 
     for (const tc of toolCalls) {
+      // Allocate a fresh content index for this tool call so the UI does not
+      // mix it with the preceding text chunk at the same index.
+      toolContentIndex++;
+      const toolIdx = toolContentIndex;
       const toolStepId = uuid();
       let args = {};
       try { args = JSON.parse(tc.function.arguments || '{}'); } catch { /* tolerate */ }
@@ -403,7 +407,7 @@ async function runAgenticStream({ res, ctx, host }) {
       sendSSE(res, {
         event: 'on_run_step',
         data: {
-          id: toolStepId, runId: responseMessageId, index: toolContentIndex,
+          id: toolStepId, runId: responseMessageId, index: toolIdx,
           type: 'tool_calls',
           stepDetails: { type: 'tool_calls', tool_calls: [{ id: tc.id, name: tc.function.name, args: tc.function.arguments, type: 'tool_call' }] },
           usage: null,
@@ -414,16 +418,17 @@ async function runAgenticStream({ res, ctx, host }) {
 
       sendSSE(res, {
         event: 'on_run_step_completed',
-        data: { result: { id: toolStepId, index: toolContentIndex, tool_call: { id: tc.id, name: tc.function.name, args: tc.function.arguments, output: toolOutput, type: 'tool_call', progress: 1 } } },
+        data: { result: { id: toolStepId, index: toolIdx, tool_call: { id: tc.id, name: tc.function.name, args: tc.function.arguments, output: toolOutput, type: 'tool_call', progress: 1 } } },
       });
 
       toolCallParts.push({
         type: 'tool_call',
         tool_call: { id: tc.id, name: tc.function.name, args: tc.function.arguments, output: toolOutput, type: 'tool_call', progress: 1 },
       });
-      toolContentIndex++;
       apiMessages.push({ role: 'tool', tool_call_id: tc.id, content: toolOutput });
     }
+    // Allocate a new index for the next text chunk.
+    toolContentIndex++;
   }
 
   if (lastError && !fullText) {
