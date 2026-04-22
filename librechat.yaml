@@ -1,0 +1,673 @@
+# ============================================================================
+# LIBRECHAT CONFIGURATION — CLONE COMPLET DE CLAUDE.AI
+# ============================================================================
+# Ce fichier configure LibreChat comme un clone fonctionnel de claude.ai avec:
+# - Tous les connecteurs OAuth (Gmail, Drive, Calendar, Linear, GitHub, Slack...)
+# - Artifacts activés pour les agents
+# - Web Search configuré
+# - Code Interpreter
+# - User Memory
+#
+# Documentation: https://www.librechat.ai/docs/configuration/librechat_yaml
+# ============================================================================
+
+version: 1.3.8
+cache: true
+
+# ============================================================================
+# INTERFACE — Personnalisation de l'UI
+# ============================================================================
+interface:
+  customWelcome: |
+    Posez-moi n'importe quoi.
+
+  privacyPolicy:
+    externalUrl: '${LIBRECHAT_URL}/privacy'
+    openNewTab: true
+
+  termsOfService:
+    externalUrl: '${LIBRECHAT_URL}/terms'
+    openNewTab: true
+
+  modelSelect: true
+  parameters: true
+  presets: true
+
+  prompts:
+    use: true
+    create: true
+    share: true
+    public: true
+
+  bookmarks: true
+  multiConvo: true
+
+  agents:
+    use: true
+    create: true
+    share: true
+    public: true
+
+  peoplePicker:
+    users: true
+    groups: true
+    roles: true
+
+  marketplace:
+    use: true
+
+  fileCitations: true
+
+  # MCP Servers management in UI
+  mcpServers:
+    use: true
+    create: true
+    share: true
+    public: true
+
+# ============================================================================
+# REGISTRATION — Authentification sociale
+# ============================================================================
+registration:
+  socialLogins: ['github', 'google', 'discord', 'openid']
+
+# ============================================================================
+# ACTIONS — Domaines autorisés pour les agents
+# ============================================================================
+actions:
+  allowedDomains:
+    - 'swapi.dev'
+    - 'librechat.ai'
+    - 'google.com'
+    - 'github.com'
+    - 'linear.app'
+    - 'slack.com'
+    - 'notion.so'
+
+# ============================================================================
+# MCP SETTINGS — Sécurité des connexions MCP
+# ============================================================================
+mcpSettings:
+  allowedDomains:
+    # Google MCP Services (si Google publie des MCP servers officiels)
+    - 'gmailmcp.googleapis.com'
+    - 'drivemcp.googleapis.com'
+    - 'calendarmcp.googleapis.com'
+    # Linear MCP
+    - 'mcp.linear.app'
+    # GitHub Copilot MCP
+    - 'api.githubcopilot.com'
+    # Slack MCP
+    - 'mcp.slack.com'
+    # Notion MCP
+    - 'mcp.notion.com'
+    # Composio (hosted MCP servers)
+    - 'mcp.composio.dev'
+    # PayPal MCP
+    - 'mcp.paypal.com'
+    # Spotify MCP
+    - '*.workers.dev'
+    # Smithery MCP
+    - '*.smithery.ai'
+    - 'server.smithery.ai'
+    - 'registry.smithery.ai'
+    # Internal Docker hosts
+    - 'host.docker.internal'
+    - 'localhost'
+
+# ============================================================================
+# MCP SERVERS — Tous les connecteurs pré-configurés
+# ============================================================================
+# L'utilisateur n'a qu'à cliquer "Connect" → OAuth flow → connecté.
+# Aucune URL à entrer manuellement.
+# ============================================================================
+mcpServers:
+
+  # --------------------------------------------------------------------------
+  # GOOGLE SERVICES (via Composio hosted MCP)
+  # --------------------------------------------------------------------------
+  # Note: Google n'a pas encore de MCP servers officiels publics.
+  # Utilisez Composio pour Gmail, Drive, Calendar via leur plateforme hébergée.
+  # Obtenez votre endpoint sur: https://composio.dev
+  # --------------------------------------------------------------------------
+
+  gmail:
+    type: streamable-http
+    url: '${COMPOSIO_GMAIL_MCP_URL}'
+    title: 'Gmail'
+    description: 'Lire, envoyer et gérer vos emails Gmail'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Gmail account.
+      Use these tools to read, search, send, and manage emails.
+      Always ask for confirmation before sending emails.
+      Never share email content with third parties.
+      Available operations: search emails, read email, send email, create draft, list labels.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  google-drive:
+    type: streamable-http
+    url: '${COMPOSIO_DRIVE_MCP_URL}'
+    title: 'Google Drive'
+    description: 'Accéder, créer et gérer vos fichiers Google Drive'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Google Drive.
+      Use these tools to list, read, create, update, and delete files and folders.
+      Always ask for confirmation before creating or deleting files.
+      Available operations: list files, search files, read file, create file, upload file, delete file.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  google-calendar:
+    type: streamable-http
+    url: '${COMPOSIO_CALENDAR_MCP_URL}'
+    title: 'Google Calendar'
+    description: 'Gérer vos événements et rendez-vous'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Google Calendar.
+      Use these tools to read, create, update, and delete calendar events.
+      Always confirm with the user before creating or modifying events.
+      Available operations: list events, get event, create event, update event, delete event, find free time.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  google-sheets:
+    type: sse
+    url: '${COMPOSIO_SHEETS_MCP_URL}'
+    title: 'Google Sheets'
+    description: 'Lire et modifier des feuilles de calcul Google Sheets'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Google Sheets.
+      Use these tools to read, write, and manipulate spreadsheet data.
+      Be careful when modifying data - always confirm with the user first.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  # --------------------------------------------------------------------------
+  # LINEAR — Gestion de projets
+  # --------------------------------------------------------------------------
+  # MCP Server officiel Linear: https://mcp.linear.app/mcp
+  # Requires OAuth via Linear
+  # --------------------------------------------------------------------------
+
+  linear:
+    type: streamable-http
+    url: 'https://mcp.linear.app/mcp'
+    title: 'Linear'
+    description: 'Gérer vos issues, projets et cycles Linear'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Linear workspace.
+      Use these tools to manage issues, projects, teams, cycles, and roadmaps.
+      Available operations: list issues, create issue, update issue, list projects, search, etc.
+    oauth:
+      authorization_url: 'https://linear.app/oauth/authorize'
+      token_url: 'https://api.linear.app/oauth/token'
+      client_id: '${LINEAR_CLIENT_ID}'
+      client_secret: '${LINEAR_CLIENT_SECRET}'
+      redirect_uri: '${LIBRECHAT_URL}/api/mcp/linear/oauth/callback'
+      scope: 'read write'
+      grant_types_supported:
+        - authorization_code
+        - refresh_token
+      token_endpoint_auth_methods_supported:
+        - client_secret_post
+      response_types_supported:
+        - code
+
+  # --------------------------------------------------------------------------
+  # GITHUB — Gestion de code
+  # --------------------------------------------------------------------------
+  # Option 1: Via PAT (Personal Access Token) - plus simple
+  # Option 2: Via OAuth - plus complexe mais meilleur UX
+  # --------------------------------------------------------------------------
+
+  github:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-github'
+    title: 'GitHub'
+    description: 'Gérer vos repos, issues et pull requests GitHub'
+    startup: false
+    serverInstructions: |
+      You have access to GitHub repositories via the user's PAT.
+      Use these tools to read repos, issues, PRs, commits, and manage code.
+      Available operations: search repos, list issues, create issue, list PRs, search code, etc.
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: '{{GITHUB_PAT}}'
+    customUserVars:
+      GITHUB_PAT:
+        title: 'GitHub Personal Access Token'
+        description: |
+          Votre GitHub PAT (classic) avec les scopes: repo, read:org.
+          <a href="https://github.com/settings/tokens/new?scopes=repo,read:org&description=LibreChat" target="_blank">Créer un PAT ici</a>
+
+  # --------------------------------------------------------------------------
+  # SLACK — Communication d'équipe
+  # --------------------------------------------------------------------------
+
+  slack:
+    type: streamable-http
+    url: '${COMPOSIO_SLACK_MCP_URL}'
+    title: 'Slack'
+    description: 'Lire et envoyer des messages Slack'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Slack workspace.
+      Use these tools to read messages, send messages, and manage channels.
+      Always ask before posting messages.
+      Available operations: list channels, read channel, send message, search messages.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  # --------------------------------------------------------------------------
+  # NOTION — Documentation et bases de données
+  # --------------------------------------------------------------------------
+
+  notion:
+    type: streamable-http
+    url: '${COMPOSIO_NOTION_MCP_URL}'
+    title: 'Notion'
+    description: 'Lire, créer et gérer vos pages et bases Notion'
+    requiresOAuth: true
+    timeout: 30000
+    initTimeout: 15000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Notion workspace.
+      Use these tools to read, create, and update pages and databases.
+      Available operations: search, get page, create page, update page, query database.
+    headers:
+      X-User-ID: '{{LIBRECHAT_USER_ID}}'
+      X-API-Key: '${COMPOSIO_API_KEY}'
+
+  # --------------------------------------------------------------------------
+  # PAYPAL — Paiements (exemple de MCP avec OAuth officiel)
+  # --------------------------------------------------------------------------
+
+  paypal:
+    type: sse
+    url: 'https://mcp.paypal.com/sse'
+    title: 'PayPal'
+    description: 'Gérer vos transactions PayPal'
+    initTimeout: 150000
+    startup: false
+    serverInstructions: |
+      You have access to the user's PayPal account.
+      Use these tools to check balances, list transactions, and manage payments.
+      Never initiate payments without explicit user confirmation.
+
+  # --------------------------------------------------------------------------
+  # SPOTIFY — Musique (exemple complet OAuth avec refresh tokens)
+  # --------------------------------------------------------------------------
+
+  spotify:
+    type: streamable-http
+    url: 'https://mcp-spotify-oauth-example.account.workers.dev/mcp'
+    title: 'Spotify'
+    description: 'Contrôler la lecture Spotify, gérer playlists'
+    initTimeout: 150000
+    startup: false
+    serverInstructions: |
+      You have access to the user's Spotify account.
+      Use these tools to search music, control playback, manage playlists.
+      Available operations: search, play, pause, skip, get playlists, add to playlist.
+
+  # --------------------------------------------------------------------------
+  # FILESYSTEM LOCAL — Accès aux fichiers locaux
+  # --------------------------------------------------------------------------
+
+  filesystem:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-filesystem'
+      - '/workspace'
+    title: 'File System'
+    description: 'Lire et écrire des fichiers dans /workspace'
+    chatMenu: false
+    serverInstructions: |
+      You have access to files in the /workspace directory.
+      Use these tools to read, write, create, and delete files.
+      Available operations: read_file, write_file, list_directory, create_directory, move_file, search_files.
+
+  # --------------------------------------------------------------------------
+  # BRAVE SEARCH — Recherche web
+  # --------------------------------------------------------------------------
+
+  brave-search:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-brave-search'
+    title: 'Brave Search'
+    description: 'Rechercher sur le web avec Brave'
+    serverInstructions: |
+      Use Brave Search to find current information on the web.
+      Use it when the user asks about recent events or needs web search.
+      Provide citations and sources for factual claims.
+    env:
+      BRAVE_API_KEY: '${BRAVE_API_KEY}'
+
+  # --------------------------------------------------------------------------
+  # PUPPETEER — Automatisation navigateur
+  # --------------------------------------------------------------------------
+
+  puppeteer:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-puppeteer'
+    title: 'Browser Automation'
+    description: 'Automatiser le navigateur web'
+    timeout: 300000
+    chatMenu: false
+    serverInstructions: |
+      You can automate web browsers using Puppeteer.
+      Use these tools to navigate pages, take screenshots, fill forms, click elements.
+      Do not access local files or internal IP addresses.
+      Available operations: navigate, screenshot, click, type, evaluate.
+
+  # --------------------------------------------------------------------------
+  # OBSIDIAN — Notes (si vault local)
+  # --------------------------------------------------------------------------
+
+  obsidian:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - 'mcp-obsidian'
+      - '{{OBSIDIAN_VAULT_PATH}}'
+    title: 'Obsidian'
+    description: 'Accéder à vos notes Obsidian'
+    startup: false
+    serverInstructions: |
+      You have access to the user's Obsidian vault.
+      Use these tools to search notes, read notes, create notes, and manage links.
+    customUserVars:
+      OBSIDIAN_VAULT_PATH:
+        title: 'Chemin du Vault Obsidian'
+        description: 'Le chemin absolu vers votre vault Obsidian (ex: /home/user/Documents/ObsidianVault)'
+
+  # --------------------------------------------------------------------------
+  # SEQUENTIAL THINKING — Raisonnement étape par étape
+  # --------------------------------------------------------------------------
+
+  sequential-thinking:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@modelcontextprotocol/server-sequential-thinking'
+    title: 'Sequential Thinking'
+    description: 'Raisonnement structuré étape par étape'
+    serverInstructions: |
+      Use this for complex problems that require step-by-step reasoning.
+      Break down problems into clear sequential steps.
+      Useful for: planning, problem-solving, decision-making.
+
+  # --------------------------------------------------------------------------
+  # MEMORY (MEM0) — Mémoire persistante
+  # --------------------------------------------------------------------------
+
+  memory:
+    type: stdio
+    command: npx
+    args:
+      - '-y'
+      - '@mem0/mcp-server'
+    title: 'Memory (Mem0)'
+    description: 'Sauvegarder et retrouver des informations persistantes'
+    startup: false
+    serverInstructions: |
+      Use Memory to save and retrieve long-term information about the user.
+      Store facts, preferences, and context that should persist across conversations.
+    env:
+      MEM0_API_KEY: '{{MEM0_API_KEY}}'
+    customUserVars:
+      MEM0_API_KEY:
+        title: 'Mem0 API Key'
+        description: |
+          Votre clé API Mem0. <a href="https://app.mem0.ai/settings/api-keys" target="_blank">Obtenir ici</a>
+
+# ============================================================================
+# WEB SEARCH — Recherche web pour les agents
+# ============================================================================
+webSearch:
+  # Search Provider (required)
+  serperApiKey: '${SERPER_API_KEY}'
+
+  # Scraper (required)
+  firecrawlApiKey: '${FIRECRAWL_API_KEY}'
+
+  # Reranker (required)
+  jinaApiKey: '${JINA_API_KEY}'
+
+  # Safe search level: 0 (OFF), 1 (MODERATE - default), 2 (STRICT)
+  safeSearch: 1
+
+# ============================================================================
+# MEMORY — Mémoire utilisateur cross-session
+# ============================================================================
+memory:
+  disabled: false
+  personalize: true
+  tokenLimit: 3000
+  messageWindowSize: 10
+  validKeys:
+    - 'user_preferences'
+    - 'conversation_context'
+    - 'learned_facts'
+    - 'personal_information'
+    - 'project_context'
+  agent:
+    provider: 'ollama'
+    model: 'gemma4'
+    instructions: |
+      You are a memory agent. Your job is to extract and store important facts about the user.
+      Focus on:
+      - Explicitly stated preferences (programming language, timezone, communication style)
+      - Important personal facts (name, role, company)
+      - Project context (current projects, technologies used)
+      - Learned patterns (how they prefer responses formatted)
+      Delete outdated or corrected information promptly.
+      Be concise in what you store.
+
+# ============================================================================
+# ENDPOINTS — Providers LLM
+# ============================================================================
+endpoints:
+  # --------------------------------------------------------------------------
+  # AGENTS — Configuration globale
+  # --------------------------------------------------------------------------
+  agents:
+    recursionLimit: 50
+    maxRecursionLimit: 100
+    disableBuilder: false
+    maxCitations: 30
+    maxCitationsPerFile: 7
+    minRelevanceScore: 0.45
+    capabilities:
+      - deferred_tools
+      - execute_code
+      - file_search
+      - actions
+      - tools
+      - artifacts
+
+  # --------------------------------------------------------------------------
+  # OLLAMA — Gemma 4 (provider PAR DÉFAUT, tout passe par ici)
+  # Supporte soit un Ollama self-hosted (OLLAMA_BASE_URL), soit Ollama Cloud
+  # (https://ollama.com/api) avec OLLAMA_API_KEY pour Bearer auth.
+  # --------------------------------------------------------------------------
+  custom:
+    - name: 'Ollama'
+      apiKey: '${OLLAMA_API_KEY}'
+      baseURL: '${OLLAMA_BASE_URL}/v1'
+      models:
+        default:
+          - 'gemma4'
+          - 'gemma3'
+          - 'gemma2'
+          - 'llama3.2'
+          - 'qwen2.5'
+        fetch: true
+      titleConvo: true
+      titleModel: 'gemma4'
+      streamRate: 20
+      modelDisplayLabel: 'Gemma 4 (Aurion)'
+
+    # ------------------------------------------------------------------------
+    # Z.AI (ex-Zhipu GLM) — Endpoint OpenAI-compatible
+    # ------------------------------------------------------------------------
+    - name: 'Zhipu'
+      apiKey: '${ZHIPU_API_KEY}'
+      baseURL: 'https://api.z.ai/api/paas/v4'
+      models:
+        default:
+          - 'glm-4.5-flash'
+          - 'glm-4.5'
+          - 'glm-4.5-air'
+          - 'glm-4-flash'
+        fetch: false
+      titleConvo: true
+      titleModel: 'glm-4.5-flash'
+      modelDisplayLabel: 'GLM (z.ai)'
+
+    # ------------------------------------------------------------------------
+    # OPENROUTER — Tous les modèles (Claude, GPT, Gemini, Llama, DeepSeek…)
+    # `fetch: true` = la liste est récupérée live depuis l'API OpenRouter.
+    # Les noms bruts ("anthropic/claude-opus-4.6") sont transformés en labels
+    # humains par client/src/utils/openrouterModelNames.ts.
+    # ------------------------------------------------------------------------
+    - name: 'OpenRouter'
+      apiKey: '${OPENROUTER_KEY}'
+      baseURL: 'https://openrouter.ai/api/v1'
+      models:
+        default:
+          - 'anthropic/claude-opus-4.6'
+          - 'anthropic/claude-sonnet-4.5'
+          - 'anthropic/claude-3.5-haiku'
+          - 'google/gemini-2.5-pro'
+          - 'google/gemini-2.5-flash'
+          - 'openai/gpt-5'
+          - 'openai/gpt-4o'
+          - 'openai/o3'
+          - 'meta-llama/llama-4-maverick'
+          - 'deepseek/deepseek-r1'
+          - 'x-ai/grok-4'
+          - 'mistralai/mistral-large'
+        fetch: true
+      headers:
+        HTTP-Referer: '${LIBRECHAT_URL}'
+        X-Title: 'LibreChat'
+      titleConvo: true
+      titleModel: 'anthropic/claude-3.5-haiku'
+      dropParams:
+        - 'stop'
+      streamRate: 35
+      modelDisplayLabel: 'OpenRouter'
+      forcePrompt: false
+
+  # --------------------------------------------------------------------------
+  # ANTHROPIC NATIVE — Pour un streaming SSE optimal (plus fluide qu'OpenRouter)
+  # Activé automatiquement si ANTHROPIC_API_KEY est présent.
+  # --------------------------------------------------------------------------
+  anthropic:
+    apiKey: '${ANTHROPIC_API_KEY}'
+    models:
+      default:
+        - 'claude-opus-4-5-20250101'
+        - 'claude-sonnet-4-5-20250101'
+        - 'claude-3-5-haiku-20241022'
+      fetch: false
+    titleConvo: true
+    titleModel: 'claude-3-5-haiku-20241022'
+    streamRate: 35
+
+# ============================================================================
+# MODEL SPECS — Presets de modèles
+# ============================================================================
+modelSpecs:
+  enforce: true
+  prioritize: true
+  list:
+    # Gemma 4 — Modèle local Ollama (par défaut)
+    - name: 'gemma4'
+      label: 'Aurion (Gemma 4)'
+      description: 'Modèle local Gemma 4 via Ollama — rapide, privé, gratuit.'
+      default: true
+      preset:
+        endpoint: 'Ollama'
+        model: 'gemma4'
+        modelLabel: 'Aurion'
+
+    - name: 'claude-opus'
+      label: 'Claude Opus 4.6'
+      description: 'Le modèle le plus puissant d''Anthropic. Excellent pour les tâches complexes.'
+      preset:
+        endpoint: 'OpenRouter'
+        model: 'anthropic/claude-opus-4.6'
+        modelLabel: 'Claude Opus 4.6'
+
+    - name: 'claude-sonnet'
+      label: 'Claude Sonnet 4.5'
+      description: 'Excellent équilibre vitesse / qualité — usage quotidien.'
+      preset:
+        endpoint: 'OpenRouter'
+        model: 'anthropic/claude-sonnet-4.5'
+        modelLabel: 'Claude Sonnet 4.5'
+
+    - name: 'gemini-pro'
+      label: 'Gemini 2.5 Pro'
+      description: 'Modèle multimodal phare de Google.'
+      preset:
+        endpoint: 'OpenRouter'
+        model: 'google/gemini-2.5-pro'
+        modelLabel: 'Gemini 2.5 Pro'
+
+    - name: 'gpt-5'
+      label: 'GPT-5'
+      description: 'Dernier modèle OpenAI.'
+      preset:
+        endpoint: 'OpenRouter'
+        model: 'openai/gpt-5'
+        modelLabel: 'GPT-5'
+
+# ============================================================================
+# FIN DE LA CONFIGURATION
+# ============================================================================
+
