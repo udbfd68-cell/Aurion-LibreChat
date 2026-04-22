@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       type: 'custom',
       iconURL: '/assets/ollama.svg',
       models: {
-        default: ['gpt-oss:120b', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b', 'gemma3:27b'],
+        default: ['gemma4:31b', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b', 'gemma3:27b'],
         fetch: false,
       },
       modelDisplayLabel: 'Ollama',
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
       type: 'custom',
       iconURL: '/assets/aurion.svg',
       models: {
-        default: ['gpt-oss:120b', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b', 'gemma3:27b'],
+        default: ['gemma4:31b', 'gpt-oss:20b', 'qwen3-coder:480b', 'deepseek-v3.1:671b', 'gemma3:27b'],
         fetch: false,
       },
       modelDisplayLabel: 'Aurion AI',

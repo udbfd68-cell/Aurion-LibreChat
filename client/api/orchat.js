@@ -315,7 +315,7 @@ export default async function handler(req, res) {
   // ═══ DIRECT: Single-request SSE (frontend POST → immediate SSE response) ═══
   if (action === 'direct' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gpt-oss:120b';
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gemma4:31b';
     const text = body.text || body.editedContent || '';
     const userMessageId = body.messageId || uuid();
     const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
@@ -532,7 +532,7 @@ export default async function handler(req, res) {
   // ═══ POST: Start Chat ═══
   if (action === 'post' && req.method === 'POST') {
     const body = req.body || {};
-    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gpt-oss:120b';
+    const model = body.model_parameters?.model || body.model || body.agentOption?.model || 'gemma4:31b';
     const text = body.text || body.editedContent || '';
     const userMessageId = body.messageId || uuid();
     const parentMessageId = body.parentMessageId || '00000000-0000-0000-0000-000000000000';
@@ -922,13 +922,13 @@ export default async function handler(req, res) {
     const convoId = req.query.convoId || '';
     cleanStore();
     const ctx = global._orStore.get(convoId);
-    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'gpt-oss:120b', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    if (!ctx) return res.status(200).json({ conversationId: convoId, title: 'New Chat', endpoint: 'custom', model: 'gemma4:31b', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
     const firstUserMsg = ctx.messages?.find(m => m.role === 'user');
     return res.status(200).json({
       conversationId: convoId,
       title: firstUserMsg ? firstUserMsg.content.substring(0, 60) : 'New Chat',
       endpoint: ctx.endpoint || 'custom',
-      model: ctx.model || 'gpt-oss:120b',
+      model: ctx.model || 'gemma4:31b',
       temperature: ctx.temperature || 0.7,
       maxOutputTokens: ctx.maxTokens || 4096,
       createdAt: new Date(ctx.ts || Date.now()).toISOString(),
@@ -957,7 +957,7 @@ export default async function handler(req, res) {
         text: m.content || '',
         isCreatedByUser: m.role === 'user',
         sender: m.role === 'user' ? 'User' : (ctx.model || 'AI'),
-        model: m.role !== 'user' ? (ctx.model || 'gpt-oss:120b') : undefined,
+        model: m.role !== 'user' ? (ctx.model || 'gemma4:31b') : undefined,
         endpoint: ctx.endpoint || 'custom',
         error: false,
         unfinished: false,
