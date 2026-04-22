@@ -440,18 +440,25 @@ export default async function handler(req, res) {
     }
 
     await new Promise((resolve) => {
+      // Prefer OpenRouter when configured (works with tool-calling loop above);
+      // fall back to ollama.com only if OPENROUTER_KEY is absent.
+      const useOpenRouter = !!OPENROUTER_KEY;
+      const host = useOpenRouter ? 'openrouter.ai' : 'ollama.com';
+      const path = useOpenRouter ? '/api/v1/chat/completions' : '/v1/chat/completions';
+      const authKey = useOpenRouter ? OPENROUTER_KEY : OLLAMA_API_KEY;
+      const extraHeaders = useOpenRouter
+        ? { 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat' }
+        : {};
       const apiReq = https.request({
-        hostname: 'ollama.com', path: '/v1/chat/completions', method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OLLAMA_API_KEY, 'Content-Length': Buffer.byteLength(requestBody) },
+        hostname: host, path, method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authKey, 'Content-Length': Buffer.byteLength(requestBody), ...extraHeaders },
       }, (apiRes) => {
         if (apiRes.statusCode !== 200) {
           let errBody = '';
           apiRes.on('data', (c) => (errBody += c));
           apiRes.on('end', () => {
             streamError = 'Aurion error ' + apiRes.statusCode + ': ' + errBody.substring(0, 500);
-            console.error('[ORCHAT] Ollama API error:', streamError, '- falling back to Render backend');
-            // Fallback to Render backend
-            proxySSEToRender(req, res, ctx.conversationId);
+            console.error('[ORCHAT] Upstream error (' + host + '):', streamError);
             resolve();
           });
           return;
@@ -774,12 +781,20 @@ export default async function handler(req, res) {
     }
 
     await new Promise((resolve) => {
+      const useOpenRouter = !!OPENROUTER_KEY;
+      const host = useOpenRouter ? 'openrouter.ai' : 'ollama.com';
+      const path = useOpenRouter ? '/api/v1/chat/completions' : '/v1/chat/completions';
+      const authKey = useOpenRouter ? OPENROUTER_KEY : OLLAMA_API_KEY;
+      const extraHeaders = useOpenRouter
+        ? { 'HTTP-Referer': 'https://client-gold-zeta.vercel.app', 'X-Title': 'Aurion Chat' }
+        : {};
       const apiReq = https.request({
-        hostname: 'ollama.com', path: '/v1/chat/completions', method: 'POST',
+        hostname: host, path, method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + OLLAMA_API_KEY,
+          'Authorization': 'Bearer ' + authKey,
           'Content-Length': Buffer.byteLength(requestBody),
+          ...extraHeaders,
         },
       }, (apiRes) => {
         if (apiRes.statusCode !== 200) {
@@ -787,9 +802,7 @@ export default async function handler(req, res) {
           apiRes.on('data', (c) => (errBody += c));
           apiRes.on('end', () => {
             streamError = 'Aurion error ' + apiRes.statusCode + ': ' + errBody.substring(0, 500);
-            console.error('[ORCHAT] Ollama API error (GET stream):', streamError, '- falling back to Render backend');
-            // Fallback to Render backend
-            proxySSEToRender(req, res, realStreamId);
+            console.error('[ORCHAT] Upstream error (' + host + ' GET stream):', streamError);
             resolve();
           });
           return;
