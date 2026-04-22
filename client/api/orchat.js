@@ -159,6 +159,7 @@ const BUILTIN_TOOLS = {
   prospector: { type: 'function', function: { name: 'prospector', description: 'Find business leads, contacts, and decision-makers using multi-strategy web search. Searches LinkedIn profiles, company pages, and public contact info.', parameters: { type: 'object', properties: { company: { type: 'string', description: 'Company name to research (e.g., "Stripe", "OpenAI")' }, role: { type: 'string', description: 'Job title or role to find (e.g., "CTO", "VP Sales", "Head of Engineering")' }, industry: { type: 'string', description: 'Industry sector (e.g., "fintech", "AI/ML", "healthcare")' } } } } },
   calendar: { type: 'function', function: { name: 'calendar', description: 'Manage calendar events: create, list, update, delete, search, or clear all events. Supports natural language dates (today, tomorrow, next monday, in 3 days).', parameters: { type: 'object', properties: { action: { type: 'string', enum: ['list', 'create', 'update', 'delete', 'search', 'clear'], description: 'Operation to perform' }, title: { type: 'string', description: 'Event title (required for create; used as search query for search action)' }, date: { type: 'string', description: 'Date: ISO 8601, "today", "tomorrow", "next monday", "in 3 days", etc.' }, eventId: { type: 'string', description: 'Event ID (required for update/delete)' } }, required: ['action'] } } },
   browser: { type: 'function', function: { name: 'browser', description: 'Browse any web page and extract its text content, links, and metadata. Use this to read articles, documentation, or any URL.', parameters: { type: 'object', properties: { url: { type: 'string', description: 'Full URL to browse (https://...)' }, action: { type: 'string', enum: ['read', 'click', 'screenshot'], description: 'Action to perform (default: read)' } }, required: ['url'] } } },
+  web_browser: { type: 'function', function: { name: 'web_browser', description: 'REAL browser automation powered by Playwright + Chromium. Navigate, click, type, press keys, wait for elements, screenshot, and read the page. Use this (NOT "browser") whenever the user asks you to click, type into a form, navigate multi-step, or interact with a website. Example actions: {"type":"goto","url":"https://example.com"}, {"type":"click","selector":"button.submit"}, {"type":"type","selector":"input[name=q]","text":"hello"}, {"type":"press","key":"Enter"}, {"type":"wait","selector":".result"}, {"type":"content"} to read the page text, {"type":"snapshot"} for an accessibility tree, {"type":"screenshot"}.', parameters: { type: 'object', properties: { actions: { type: 'array', description: 'Sequence of browser actions to run in order on one page.', items: { type: 'object', properties: { type: { type: 'string', enum: ['goto','click','type','press','wait','content','snapshot','screenshot'] }, url: { type: 'string' }, selector: { type: 'string' }, text: { type: 'string' }, key: { type: 'string' }, ms: { type: 'number' }, fullPage: { type: 'boolean' } }, required: ['type'] } } }, required: ['actions'] } } },
 };
 
 async function buildToolDefs(toolNames, host) {
@@ -268,6 +269,7 @@ async function executeTool(name, args, host) {
     case 'prospector': return realTools.prospector(args.company, args.role, args.industry);
     case 'calendar': return realTools.calendar(args.action, args.title, args.date, args.eventId || args.id);
     case 'browser': return realTools.browser(args.url, args.action);
+    case 'web_browser': return realTools.webBrowser(args);
     default: return JSON.stringify({ error: 'Unknown tool: ' + name + '. This tool has no implementation.' });
   }
 }
@@ -350,8 +352,12 @@ export default async function handler(req, res) {
     global._orStore.set(conversationId, ctx);
 
     // Start SSE immediately
+    // Either OLLAMA_API_KEY (primary) or OPENROUTER_KEY (fallback/tools) must be set.
+    // If only OPENROUTER_KEY is set, the Ollama call at line ~439 will 401 and the fallback
+    // to the Render backend (proxySSEToRender) will take over.
     const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
-    if (!OLLAMA_API_KEY) {
+    const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
+    if (!OLLAMA_API_KEY && !OPENROUTER_KEY) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
       sendSSEError(res, 'Aurion API key not configured');
       return res.end();
@@ -633,7 +639,8 @@ export default async function handler(req, res) {
     }
 
     const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY;
-    if (!OLLAMA_API_KEY) {
+    const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
+    if (!OLLAMA_API_KEY && !OPENROUTER_KEY) {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-transform', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' });
       sendSSEError(res, 'Aurion API key not configured');
       return res.end();

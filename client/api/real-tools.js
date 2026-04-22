@@ -919,10 +919,58 @@ function indexDocument(id, name, content, type) {
   return { id: id, name: name, size: content.length, indexed: true };
 }
 
+/* ═══════════════════════════════════════════════════
+   REAL Web Browser — proxies Playwright on Render (Chromium)
+   Actions: goto, click, type, press, wait, content, screenshot, snapshot
+   ═══════════════════════════════════════════════════ */
+async function webBrowser(args) {
+  // Accept either {url, action} shortcut or {actions: [...]}
+  let actions = [];
+  if (Array.isArray(args && args.actions)) {
+    actions = args.actions;
+  } else if (args && args.url) {
+    actions.push({ type: 'goto', url: args.url });
+    const action = (args.action || 'content').toLowerCase();
+    if (action === 'click' && args.selector) actions.push({ type: 'click', selector: args.selector });
+    if (action === 'type' && args.selector) actions.push({ type: 'type', selector: args.selector, text: args.text || '' });
+    if (action === 'screenshot') actions.push({ type: 'screenshot' });
+    else if (action === 'snapshot') actions.push({ type: 'snapshot' });
+    else actions.push({ type: 'content' });
+  } else {
+    return JSON.stringify({ error: 'webBrowser requires either {url, action} or {actions: [...]}' });
+  }
+
+  const backend = process.env.RENDER_BACKEND_URL || 'https://librechat-api-ew3n.onrender.com';
+  const secret = process.env.BROWSER_PROXY_SECRET || '';
+  if (!secret) return JSON.stringify({ error: 'BROWSER_PROXY_SECRET not configured on Vercel' });
+
+  try {
+    const res = await fetchUrl(backend + '/api/browser/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Browser-Secret': secret },
+      body: JSON.stringify({ actions, timeoutMs: 30000 }),
+      timeout: 45000,
+    });
+    // Trim base64 screenshots to keep LLM context small
+    let parsed;
+    try { parsed = JSON.parse(res.body); } catch { return JSON.stringify({ error: 'bad browser response', raw: res.body.slice(0, 400) }); }
+    if (parsed && Array.isArray(parsed.results)) {
+      parsed.results = parsed.results.map((r) => {
+        if (r && r.base64 && r.base64.length > 200) return { ...r, base64: '[image ' + r.base64.length + ' bytes omitted]' };
+        return r;
+      });
+    }
+    return JSON.stringify(parsed).slice(0, 12000);
+  } catch (e) {
+    return JSON.stringify({ error: 'web_browser failed: ' + e.message });
+  }
+}
+
 
 export {
   webSearch,
   browser,
+  webBrowser,
   executeCode,
   sendEmail,
   readEmail,
