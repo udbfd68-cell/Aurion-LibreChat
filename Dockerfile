@@ -7,6 +7,11 @@ RUN apk upgrade --no-cache
 RUN apk add --no-cache jemalloc
 RUN apk add --no-cache python3 py3-pip uv
 
+# Chromium for Playwright (used by /api/browser/run + @playwright/mcp).
+RUN apk add --no-cache chromium chromium-chromedriver nss freetype harfbuzz ca-certificates ttf-freefont \
+    && ls -la /usr/bin/chromium* /usr/lib/chromium/ 2>&1 | head -20
+ENV CHROME_PATH=/usr/bin/chromium-browser
+
 # Set environment variable to use jemalloc
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 
