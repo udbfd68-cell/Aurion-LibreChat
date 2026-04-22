@@ -425,10 +425,12 @@ export default async function handler(req, res) {
 
     sendSSE(res, { event: 'on_run_step', data: { type: 'message_creation', id: stepId, runId: responseMessageId, index: toolContentIndex, stepDetails: { type: 'message_creation', message_creation: { message_id: responseMessageId } }, usage: null } });
 
+    const hadTools = toolDefs.length > 0;
+    // After tool loop, DO NOT re-pass tools — forces model to produce text response
+    // (gemma4 and others may emit another tool_call chunk instead of text otherwise)
     const requestBody = JSON.stringify({
       model: ctx.model, messages: apiMessages, stream: true,
       temperature: ctx.temperature, max_tokens: ctx.maxTokens,
-      ...(toolDefs.length > 0 ? { tools: toolDefs } : {}),
     });
 
     let fullText = '';
@@ -773,10 +775,10 @@ export default async function handler(req, res) {
       },
     });
 
+    // After tool loop, DO NOT re-pass tools — forces model to produce text response
     const requestBody = JSON.stringify({
       model: ctx.model, messages: apiMessages, stream: true,
       temperature: ctx.temperature, max_tokens: ctx.maxTokens,
-      ...(toolDefs.length > 0 ? { tools: toolDefs } : {}),
     });
 
     let fullText = '';
