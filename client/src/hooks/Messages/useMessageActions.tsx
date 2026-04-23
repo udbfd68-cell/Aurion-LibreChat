@@ -98,7 +98,7 @@ export default function useMessageActions(props: TMessageActions) {
     }
 
     const modelKey = message?.model ?? '';
-    if (modelKey) {
+    if (modelKey && agentsMap[modelKey]) {
       return agentsMap[modelKey];
     }
 

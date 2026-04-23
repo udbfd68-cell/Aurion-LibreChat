@@ -98,8 +98,8 @@ memory:
     - 'context'
     - 'projects'
   agent:
-    provider: 'openAI'
-    model: 'gpt-4o-mini'
+    provider: 'ollama'
+    model: 'gemma4:31b'
     instructions: |
       You are Aurion's memory manager. Read the full conversation history and
       persist durable, user-specific facts that will help future replies feel
