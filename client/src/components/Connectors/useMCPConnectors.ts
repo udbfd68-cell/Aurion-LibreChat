@@ -153,10 +153,13 @@ export function useMCPConnectors() {
     return map;
   }, [useFallback, lsState, serversQuery.data, toolsQuery.data, statusQuery.data]);
 
-  /** Check if a registry server ID is connected */
+  /** Check if a registry server ID is connected (checks id, id-remote, name slug) */
   const isConnected = useCallback(
     (registryId: string): boolean => {
-      return connectedServers.has(registryId);
+      return (
+        connectedServers.has(registryId) ||
+        connectedServers.has(`${registryId}-remote`)
+      );
     },
     [connectedServers],
   );
@@ -164,7 +167,10 @@ export function useMCPConnectors() {
   /** Get connection info for a registry server */
   const getConnectionInfo = useCallback(
     (registryId: string): MCPConnectorInfo | undefined => {
-      return connectedServers.get(registryId);
+      return (
+        connectedServers.get(registryId) ||
+        connectedServers.get(`${registryId}-remote`)
+      );
     },
     [connectedServers],
   );
@@ -192,8 +198,13 @@ export function useMCPConnectors() {
       try {
         // Check if server already exists in backend (YAML or previously created)
         const existingServers = serversQuery.data ?? {};
-        const existingName = Object.keys(existingServers).find(
-          (name) => name === server.id || name === server.name.toLowerCase().replace(/\s+/g, '-'),
+        const candidateNames = [
+          server.id,
+          `${server.id}-remote`,
+          server.name.toLowerCase().replace(/\s+/g, '-'),
+        ];
+        const existingName = Object.keys(existingServers).find((name) =>
+          candidateNames.includes(name),
         );
 
         if (existingName) {
@@ -275,8 +286,23 @@ export function useMCPConnectors() {
         return { success: true };
       }
 
+      // Resolve to actual backend server name (could be id or id-remote)
+      const existingServers = serversQuery.data ?? {};
+      const actualName =
+        existingServers[serverName] !== undefined
+          ? serverName
+          : existingServers[`${serverName}-remote`] !== undefined
+            ? `${serverName}-remote`
+            : serverName;
+
       try {
-        await deleteMutation.mutateAsync(serverName);
+        await deleteMutation.mutateAsync(actualName);
+        // Refetch so UI updates immediately
+        await Promise.all([
+          serversQuery.refetch(),
+          toolsQuery.refetch(),
+          statusQuery.refetch(),
+        ]);
         return { success: true };
       } catch (err: any) {
         if (err?.response?.status === 403) {
@@ -290,7 +316,7 @@ export function useMCPConnectors() {
         return { success: false, error: message };
       }
     },
-    [deleteMutation, useFallback],
+    [deleteMutation, useFallback, serversQuery, toolsQuery, statusQuery],
   );
 
   /** Total connected count */
