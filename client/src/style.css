@@ -2976,3 +2976,111 @@ html {
 .sharepoint-picker-bg {
   background-color: #f5f5f5;
 }
+
+/* ============================================================ */
+/* AURION DEEP BLACK THEME OVERRIDE — pure #000 bg, white text  */
+/* ============================================================ */
+html, html.dark, html.gizmo, html.gizmo.dark {
+  --white: #fff;
+  --black: #000;
+  --gray-50: #0a0a0a;
+  --gray-100: #0d0d0d;
+  --gray-200: #121212;
+  --gray-300: #1a1a1a;
+  --gray-400: #242424;
+  --gray-500: #2f2f2f;
+  --gray-600: #3a3a3a;
+  --gray-700: #141414;
+  --gray-800: #000000;
+  --gray-850: #000000;
+  --gray-900: #000000;
+  --gizmo-gray-950: #000000;
+
+  --presentation: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #ededed;
+  --text-secondary-alt: #cfcfcf;
+  --text-tertiary: #bdbdbd;
+  --text-warning: #fbbf24;
+  --text-destructive: #ef4444;
+
+  --header-primary: #000000;
+  --header-hover: #0f0f0f;
+  --header-button-hover: #141414;
+
+  --surface-active: #141414;
+  --surface-active-alt: #1a1a1a;
+  --surface-hover: #1a1a1a;
+  --surface-hover-alt: #242424;
+  --surface-primary: #000000;
+  --surface-primary-alt: #000000;
+  --surface-primary-contrast: #0a0a0a;
+  --surface-secondary: #000000;
+  --surface-secondary-alt: #0a0a0a;
+  --surface-tertiary: #0a0a0a;
+  --surface-tertiary-alt: #000000;
+  --surface-dialog: #000000;
+  --surface-chat: #000000;
+
+  --border-light: #1a1a1a;
+  --border-medium: #242424;
+  --border-medium-alt: #2a2a2a;
+  --border-heavy: #3a3a3a;
+  --border-xheavy: #4a4a4a;
+
+  --ring-primary: #ffffff;
+
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --primary: 0 0% 100%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 5%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 8%;
+  --muted-foreground: 0 0% 85%;
+  --accent: 0 0% 10%;
+  --accent-foreground: 0 0% 100%;
+  --border: 0 0% 12%;
+  --input: 0 0% 10%;
+  --ring: 0 0% 100%;
+}
+
+html, body, #root {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Ensure the app main chrome is pure black */
+main, aside, nav, header, footer, [role="main"], [role="complementary"] {
+  background-color: #000000 !important;
+}
+
+/* Inputs / textareas: black bg, white text */
+textarea, input[type="text"], input[type="email"], input[type="password"], input[type="search"] {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border-color: #242424 !important;
+}
+
+/* Code blocks keep slight contrast so they're legible */
+pre, code {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+/* Tables on dark */
+table { color: #ffffff; }
+th, td { border-color: #242424 !important; }
+
+/* Primary buttons look white-on-black by default */
+.btn-primary, button[data-variant="primary"] {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Scrollbars */
+* {
+  scrollbar-color: #2a2a2a #000000;
+}
