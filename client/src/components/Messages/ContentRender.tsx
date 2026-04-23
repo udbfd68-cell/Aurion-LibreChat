@@ -10,6 +10,7 @@ import PlaceholderRow from '~/components/Chat/Messages/ui/PlaceholderRow';
 import SiblingSwitch from '~/components/Chat/Messages/SiblingSwitch';
 import HoverButtons from '~/components/Chat/Messages/HoverButtons';
 import MessageIcon from '~/components/Chat/Messages/MessageIcon';
+import MCPSuggestions from '~/components/Chat/Messages/MCPSuggestions';
 import SubRow from '~/components/Chat/Messages/SubRow';
 import { fontSizeAtom } from '~/store/fontSize';
 import store from '~/store';
@@ -249,6 +250,14 @@ const ContentRender = memo(function ContentRender({
               />
             </SubRow>
           )}
+          {isLast &&
+            !isSubmitting &&
+            !msg.isCreatedByUser &&
+            !msg.error &&
+            !msg.unfinished &&
+            (msg.text?.length ?? 0) > 40 && (
+              <MCPSuggestions messageText={msg.text ?? ''} />
+            )}
         </div>
       </div>
     </div>
