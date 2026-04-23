@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   Shield,
   Check,
@@ -6,13 +6,14 @@ import {
   X,
   AlertTriangle,
   Link2,
-  Copy,
   Terminal,
   ExternalLink,
-  Download,
-  ArrowLeft,
   BookOpen,
+  Key,
+  Download,
 } from 'lucide-react';
+import { dataService, Constants } from 'librechat-data-provider';
+import { useUpdateUserPluginsMutation } from 'librechat-data-provider/react-query';
 import type { RegistryServer } from './registryData';
 import { getIcon } from './iconMap';
 import { useMCPConnectors } from './useMCPConnectors';
@@ -45,13 +46,14 @@ interface Props {
 }
 
 export default function OAuthConsent({ server, onClose }: Props) {
-  const { connect, refreshStatus } = useMCPConnectors();
+  const { connect, refreshStatus, serversQuery } = useMCPConnectors();
+  const updateUserPlugins = useUpdateUserPluginsMutation();
   const Icon = getIcon(server.icon);
   const isStdio = server.transportType === 'stdio';
   const [phase, setPhase] = useState<Phase>(isStdio ? 'install' : 'config');
   const [error, setError] = useState('');
   const [serverUrl, setServerUrl] = useState(server.remoteUrl || '');
-  const [copied, setCopied] = useState<string | null>(null);
+  const [envValues, setEnvValues] = useState<Record<string, string>>({});
   const popupRef = useRef<Window | null>(null);
   const pollRef = useRef<number | null>(null);
 
@@ -59,33 +61,98 @@ export default function OAuthConsent({ server, onClose }: Props) {
   const needsUrl = !server.remoteUrl && !isStdio;
   const isUrlValid = /^https?:\/\/.+/.test(serverUrl.trim());
 
-  const installCommand = (() => {
-    if (!server.command) return '';
-    const parts = [server.command, ...(server.args || [])];
-    return parts.join(' ');
-  })();
+  /** Is this stdio server pre-configured by admin on the server side? */
+  const backendServerName = useMemo(() => {
+    const existing = serversQuery.data ?? {};
+    const candidates = [server.id, `${server.id}-local`, server.name.toLowerCase()];
+    return Object.keys(existing).find((n) => candidates.includes(n)) ?? null;
+  }, [serversQuery.data, server.id, server.name]);
 
-  const yamlSnippet = (() => {
-    if (!isStdio || !server.command) return '';
-    const envBlock = (server.requiredEnv || []).length
-      ? `\n      env:\n${(server.requiredEnv || [])
-          .map((k) => `        ${k}: "\${${k}}"`)
-          .join('\n')}`
-      : '';
-    const argsBlock = server.args?.length
-      ? `\n      args:\n${server.args.map((a) => `        - "${a}"`).join('\n')}`
-      : '';
-    return `mcpServers:
-  ${server.id}:
-      type: stdio
-      command: ${server.command}${argsBlock}${envBlock}`;
-  })();
+  const isServerSideAvailable = !!backendServerName;
 
-  const copy = useCallback((text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 1500);
-  }, []);
+  /** Fields to show: prefer backend-declared customUserVars, fall back to registry requiredEnv */
+  const envFields = useMemo(() => {
+    const existing: any = backendServerName ? serversQuery.data?.[backendServerName] : null;
+    if (existing?.customUserVars && typeof existing.customUserVars === 'object') {
+      return Object.entries(existing.customUserVars).map(([key, meta]: [string, any]) => ({
+        key,
+        title: meta?.title || key,
+        description: meta?.description || '',
+      }));
+    }
+    return (server.requiredEnv || []).map((k) => ({ key: k, title: k, description: '' }));
+  }, [backendServerName, serversQuery.data, server.requiredEnv]);
+
+  const allFilled = envFields.every((f) => (envValues[f.key] || '').trim().length > 0);
+
+  /** Generate a Claude Desktop config.json for manual install (fallback) */
+  const downloadClaudeConfig = useCallback(() => {
+    if (!server.command) return;
+    const envObj: Record<string, string> = {};
+    for (const f of envFields) {
+      envObj[f.key] = envValues[f.key] || `YOUR_${f.key}`;
+    }
+    const config = {
+      mcpServers: {
+        [server.id]: {
+          command: server.command,
+          args: server.args || [],
+          ...(Object.keys(envObj).length ? { env: envObj } : {}),
+        },
+      },
+    };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${server.id}-mcp-config.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [server, envFields, envValues]);
+
+  /** Install the stdio server server-side: save secrets + reinitialize */
+  const handleStdioInstall = useCallback(async () => {
+    if (!backendServerName) {
+      setPhase('error');
+      setError(
+        "Ce serveur n'est pas pré-configuré côté serveur. Téléchargez la config pour Claude Desktop ou contactez l'administrateur.",
+      );
+      return;
+    }
+    setPhase('connecting');
+    setError('');
+    try {
+      // Save secrets per-user
+      const filteredAuth: Record<string, string> = {};
+      for (const [k, v] of Object.entries(envValues)) {
+        if (v && v.trim()) filteredAuth[k] = v.trim();
+      }
+      if (Object.keys(filteredAuth).length > 0) {
+        await updateUserPlugins.mutateAsync({
+          pluginKey: `${Constants.mcp_prefix}${backendServerName}`,
+          action: 'install',
+          auth: filteredAuth,
+          isEntityTool: true,
+        });
+      }
+      // Start the server
+      const result: any = await dataService.reinitializeMCPServer(backendServerName);
+      if (result?.oauthUrl) {
+        openOAuthPopup(result.oauthUrl);
+        return;
+      }
+      refreshStatus();
+      setPhase('done');
+    } catch (err: any) {
+      setPhase('error');
+      setError(
+        err?.response?.data?.message || err?.message || "Installation impossible. Réessayez.",
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backendServerName, envValues, updateUserPlugins, refreshStatus]);
 
   /** Open OAuth provider in a popup and poll until it closes */
   const openOAuthPopup = useCallback(
@@ -276,7 +343,7 @@ export default function OAuthConsent({ server, onClose }: Props) {
             </div>
           </div>
         ) : phase === 'install' ? (
-          /* Install screen for stdio servers */
+          /* Clean install screen for stdio servers — no code snippets */
           <>
             <div className="flex flex-col items-center border-b border-white/10 px-6 pb-5 pt-8">
               <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 ring-1 ring-white/10">
@@ -284,97 +351,119 @@ export default function OAuthConsent({ server, onClose }: Props) {
               </div>
               <h2 className="text-base font-semibold text-white">{server.name}</h2>
               <p className="mt-1 max-w-xs text-center text-xs text-white/60">
-                Ce connecteur s'installe localement sur votre machine — aucune URL cloud n'existe.
+                {isServerSideAvailable
+                  ? envFields.length > 0
+                    ? 'Entrez vos identifiants pour activer ce connecteur'
+                    : 'Prêt à activer'
+                  : 'Ce connecteur s\'installe sur votre machine'}
               </p>
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/5 px-2.5 py-0.5 text-[10px] text-white/60">
-                <Terminal className="h-2.5 w-2.5" /> Installation locale
-              </span>
+              {isServerSideAvailable && (
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2.5 py-0.5 text-[10px] text-green-400 ring-1 ring-green-500/30">
+                  <Shield className="h-2.5 w-2.5" /> Géré côté serveur
+                </span>
+              )}
             </div>
 
-            <div className="max-h-[50vh] overflow-y-auto px-6 py-4">
-              <div className="mb-4">
-                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/50">
-                  1. Commande d'installation
-                </p>
-                <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black px-3 py-2.5 font-mono text-[11px] text-white/90">
-                  <Terminal className="h-3 w-3 flex-shrink-0 text-white/40" />
-                  <code className="flex-1 truncate">{installCommand}</code>
-                  <button
-                    onClick={() => copy(installCommand, 'cmd')}
-                    className="flex-shrink-0 rounded p-1 text-white/50 hover:bg-white/10 hover:text-white"
-                    aria-label="Copier"
-                  >
-                    {copied === 'cmd' ? (
-                      <Check className="h-3 w-3 text-green-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </button>
-                </div>
-                <p className="mt-1 text-[10px] text-white/40">
-                  Exécutez dans votre terminal — requiert{' '}
-                  {server.command === 'uvx' ? 'Python + uv' : 'Node.js + npm'}
-                </p>
-              </div>
-
-              {(server.requiredEnv?.length ?? 0) > 0 && (
-                <div className="mb-4">
-                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/50">
-                    2. Variables d'environnement requises
-                  </p>
-                  <div className="space-y-1">
-                    {(server.requiredEnv || []).map((env) => (
-                      <div
-                        key={env}
-                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/50 px-2.5 py-1.5 font-mono text-[11px] text-amber-400/90"
-                      >
-                        <span className="h-1 w-1 rounded-full bg-amber-400" />
-                        {env}
+            <div className="max-h-[55vh] overflow-y-auto px-6 py-5">
+              {isServerSideAvailable ? (
+                <>
+                  {envFields.length > 0 ? (
+                    <div className="space-y-3">
+                      {envFields.map((f, idx) => (
+                        <div key={f.key} className="space-y-1.5">
+                          <label
+                            htmlFor={`env-${f.key}`}
+                            className="flex items-center gap-1.5 text-xs font-medium text-white/80"
+                          >
+                            <Key className="h-3 w-3 text-white/40" />
+                            {f.title}
+                          </label>
+                          <input
+                            id={`env-${f.key}`}
+                            type="password"
+                            autoFocus={idx === 0}
+                            autoComplete="off"
+                            spellCheck={false}
+                            value={envValues[f.key] || ''}
+                            onChange={(e) =>
+                              setEnvValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                            }
+                            placeholder={`Collez votre ${f.title.toLowerCase()}`}
+                            className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white placeholder-white/30 outline-none transition-colors focus:border-white/30"
+                          />
+                          {f.description && (
+                            <p
+                              className="text-[10px] leading-relaxed text-white/50"
+                              dangerouslySetInnerHTML={{ __html: f.description }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                      <div className="mt-4 flex items-start gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                        <Shield className="mt-0.5 h-3 w-3 flex-shrink-0 text-white/40" />
+                        <p className="text-[10px] leading-relaxed text-white/60">
+                          Vos identifiants sont chiffrés et stockés uniquement sur votre compte.
+                          Ils ne sont jamais partagés.
+                        </p>
                       </div>
-                    ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3 py-6">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10">
+                        <Check className="h-6 w-6 text-green-500" />
+                      </div>
+                      <p className="text-center text-xs text-white/70">
+                        Aucun identifiant requis. Cliquez sur Activer pour démarrer.
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5">
+                    <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-400" />
+                    <div className="text-[11px] leading-relaxed text-amber-100/90">
+                      Ce connecteur n'est pas pré-configuré sur Aurion. Il s'exécute
+                      localement — téléchargez la config prête à l'emploi pour Claude Desktop
+                      ou tout client MCP compatible.
+                    </div>
                   </div>
+                  {envFields.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-white/50">
+                        Identifiants à renseigner (optionnel)
+                      </p>
+                      {envFields.map((f) => (
+                        <input
+                          key={f.key}
+                          type="password"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={envValues[f.key] || ''}
+                          onChange={(e) =>
+                            setEnvValues((prev) => ({ ...prev, [f.key]: e.target.value }))
+                          }
+                          placeholder={f.title}
+                          className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-xs text-white placeholder-white/30 outline-none focus:border-white/30"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {server.docsUrl && (
+                    <a
+                      href={server.docsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10"
+                    >
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Documentation officielle
+                      </span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
-              )}
-
-              <div className="mb-4">
-                <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-white/50">
-                  {(server.requiredEnv?.length ?? 0) > 0 ? '3' : '2'}. Ajouter à{' '}
-                  <code className="rounded bg-white/10 px-1">librechat.yaml</code>
-                </p>
-                <div className="relative rounded-lg border border-white/10 bg-black p-3">
-                  <button
-                    onClick={() => copy(yamlSnippet, 'yaml')}
-                    className="absolute right-2 top-2 rounded p-1 text-white/40 hover:bg-white/10 hover:text-white"
-                    aria-label="Copier"
-                  >
-                    {copied === 'yaml' ? (
-                      <Check className="h-3 w-3 text-green-500" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </button>
-                  <pre className="overflow-x-auto whitespace-pre font-mono text-[10px] leading-relaxed text-white/80">
-                    {yamlSnippet}
-                  </pre>
-                </div>
-                <p className="mt-1 text-[10px] text-white/40">
-                  Redémarrez LibreChat après modification du fichier.
-                </p>
-              </div>
-
-              {server.docsUrl && (
-                <a
-                  href={server.docsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10"
-                >
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    Documentation officielle
-                  </span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
               )}
             </div>
 
@@ -383,15 +472,26 @@ export default function OAuthConsent({ server, onClose }: Props) {
                 onClick={onClose}
                 className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-white hover:bg-white/5"
               >
-                Fermer
+                Annuler
               </button>
-              <button
-                onClick={() => copy(yamlSnippet, 'yaml')}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-sm font-medium text-black hover:opacity-90"
-              >
-                <Download className="h-3.5 w-3.5" />
-                {copied === 'yaml' ? 'Copié !' : 'Copier la config'}
-              </button>
+              {isServerSideAvailable ? (
+                <button
+                  onClick={handleStdioInstall}
+                  disabled={envFields.length > 0 && !allFilled}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Activer
+                </button>
+              ) : (
+                <button
+                  onClick={downloadClaudeConfig}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white py-2.5 text-sm font-medium text-black hover:opacity-90"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Télécharger config
+                </button>
+              )}
             </div>
           </>
         ) : (
