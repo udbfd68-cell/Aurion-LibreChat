@@ -491,6 +491,158 @@ mcpServers:
       Persist facts, relationships, and entities across the conversation.
       Use create_entities, create_relations, search_nodes.
 
+  # ── UTIL: FETCH (fetch any URL as clean markdown) ──
+  fetch:
+    type: stdio
+    command: uvx
+    args: ['mcp-server-fetch']
+    startup: false
+    serverInstructions: |
+      Fetch any URL and return clean markdown. Use when the user gives
+      an explicit URL to read.
+
+  # ── UTIL: TIME (timezones, conversions) ──
+  time:
+    type: stdio
+    command: uvx
+    args: ['mcp-server-time']
+    startup: false
+    serverInstructions: |
+      Get current time in any timezone, convert between timezones.
+
+  # ── DEV: GIT (local repository operations) ──
+  git:
+    type: stdio
+    command: uvx
+    args: ['mcp-server-git', '--repository', '/workspace']
+    startup: false
+    serverInstructions: |
+      Read git history, diffs, branches, and commits for /workspace.
+
+  # ── DATA: SQLITE (local DB file) ──
+  sqlite:
+    type: stdio
+    command: uvx
+    args: ['mcp-server-sqlite', '--db-path', '/workspace/data/database.db']
+    startup: false
+    serverInstructions: |
+      Read/write a local SQLite database.
+
+  # ── DATA: MONGODB ──
+  mongodb:
+    type: stdio
+    command: npx
+    args: ['-y', 'mongodb-mcp-server']
+    env:
+      MDB_MCP_CONNECTION_STRING: '{{MONGODB_URI}}'
+    startup: false
+    serverInstructions: |
+      Read/write a MongoDB database. Collections, documents, indexes.
+    customUserVars:
+      MONGODB_URI:
+        title: 'MongoDB Connection URI'
+        description: 'mongodb+srv://user:pass@cluster.mongodb.net/db'
+
+  # ── DATA: SUPABASE (DB + auth + edge functions + storage) ──
+  supabase:
+    type: stdio
+    command: npx
+    args: ['-y', '@supabase/mcp-server-supabase@latest', '--access-token', '{{SUPABASE_ACCESS_TOKEN}}']
+    startup: false
+    serverInstructions: |
+      Manage Supabase: databases, tables, auth, edge functions, storage.
+    customUserVars:
+      SUPABASE_ACCESS_TOKEN:
+        title: 'Supabase Access Token'
+        description: 'Create at https://supabase.com/dashboard/account/tokens'
+
+  # ── MONITORING: SENTRY ──
+  sentry:
+    type: stdio
+    command: npx
+    args: ['-y', '@sentry/mcp-server@latest']
+    env:
+      SENTRY_AUTH_TOKEN: '{{SENTRY_AUTH_TOKEN}}'
+      SENTRY_HOST: 'https://sentry.io'
+    startup: false
+    serverInstructions: |
+      View Sentry errors, performance issues, releases.
+    customUserVars:
+      SENTRY_AUTH_TOKEN:
+        title: 'Sentry Auth Token'
+        description: 'Create at https://sentry.io/settings/account/api/auth-tokens/'
+
+  # ── INFRA: CLOUDFLARE (Workers, KV, R2, D1, DNS) ──
+  cloudflare:
+    type: stdio
+    command: npx
+    args: ['-y', '@cloudflare/mcp-server-cloudflare']
+    env:
+      CLOUDFLARE_API_TOKEN: '{{CLOUDFLARE_API_TOKEN}}'
+      CLOUDFLARE_ACCOUNT_ID: '{{CLOUDFLARE_ACCOUNT_ID}}'
+    startup: false
+    serverInstructions: |
+      Manage Cloudflare Workers, KV, R2, D1, DNS.
+    customUserVars:
+      CLOUDFLARE_API_TOKEN:
+        title: 'Cloudflare API Token'
+        description: 'Create at https://dash.cloudflare.com/profile/api-tokens'
+      CLOUDFLARE_ACCOUNT_ID:
+        title: 'Cloudflare Account ID'
+        description: 'From Cloudflare dashboard home → right sidebar'
+
+  # ── DESIGN: FIGMA ──
+  figma:
+    type: stdio
+    command: npx
+    args: ['-y', 'figma-developer-mcp', '--figma-api-key', '{{FIGMA_API_KEY}}']
+    startup: false
+    serverInstructions: |
+      Read Figma files: design specs, components, styles.
+    customUserVars:
+      FIGMA_API_KEY:
+        title: 'Figma Personal Access Token'
+        description: 'Create at https://www.figma.com/settings → Personal access tokens'
+
+  # ── MEDIA: YOUTUBE (transcripts, channel info) ──
+  youtube:
+    type: stdio
+    command: npx
+    args: ['-y', 'supadata-mcp']
+    env:
+      SUPADATA_API_KEY: '{{SUPADATA_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Get YouTube transcripts, channel info, and search videos.
+    customUserVars:
+      SUPADATA_API_KEY:
+        title: 'Supadata API Key'
+        description: 'Get at https://supadata.ai'
+
+  # ── DOCS: DEEPWIKI (public — ask any GitHub repo) ──
+  deepwiki:
+    type: streamable-http
+    url: 'https://mcp.deepwiki.com/mcp'
+    startup: false
+    serverInstructions: |
+      Ask questions about any public GitHub repository. No auth required.
+
+  # ── DOCS: CONTEXT7 (up-to-date library docs) ──
+  context7:
+    type: streamable-http
+    url: 'https://mcp.context7.com/mcp'
+    startup: false
+    serverInstructions: |
+      Fetch up-to-date documentation and code examples for any public library.
+
+  # ── DOCS: GITMCP (open-source project documentation) ──
+  gitmcp:
+    type: streamable-http
+    url: 'https://gitmcp.io/docs'
+    startup: false
+    serverInstructions: |
+      Search READMEs and documentation of open-source GitHub projects.
+
 # ==========================================
 # ENDPOINTS — LLM Providers
 # ==========================================

@@ -35,12 +35,18 @@ RUN npm prune --production && npm cache clean --force
 # Production image
 FROM node:20-alpine
 
-RUN apk add --no-cache python3 py3-pip
+RUN apk add --no-cache python3 py3-pip git
 WORKDIR /app
 
 COPY --from=builder /app .
 
-RUN touch .env && mkdir -p /app/logs /app/uploads
+RUN touch .env && mkdir -p /app/logs /app/uploads /workspace /workspace/data
+
+# Install uv (fast Python package installer) so the Python-based MCPs
+# (fetch, time, git, sqlite) that use `uvx <server>` resolve instantly.
+# Alpine: pip needs --break-system-packages since we're on an ephemeral image.
+RUN pip install --no-cache-dir --break-system-packages uv \
+ && uv --version
 
 # Preinstall MCP server packages globally so `npx` in librechat.yaml
 # mcpServers.*.command resolves instantly at runtime without network calls.
@@ -61,7 +67,30 @@ RUN npm install -g --no-audit --no-fund \
       server-perplexity-ask \
       @browserbasehq/mcp-server-browserbase \
       @playwright/mcp \
+      mcp-send-email \
+      @notionhq/notion-mcp-server \
+      linear-mcp-server \
+      @abhiz123/todoist-mcp-server \
+      airtable-mcp-server \
+      @stripe/mcp \
+      @hubspot/mcp-server \
+      mongodb-mcp-server \
+      @supabase/mcp-server-supabase \
+      @sentry/mcp-server \
+      @cloudflare/mcp-server-cloudflare \
+      figma-developer-mcp \
+      supadata-mcp \
     || true
+
+# Pre-warm Python-based MCPs via uv so first invocation is instant.
+RUN uv tool install mcp-server-fetch || true \
+ && uv tool install mcp-server-time || true \
+ && uv tool install mcp-server-git || true \
+ && uv tool install mcp-server-sqlite || true
+
+# Expose uv tools on PATH so `uvx` is available to child processes spawned by
+# LibreChat. uv installs tools under /root/.local/bin by default.
+ENV PATH="/root/.local/bin:${PATH}"
 
 # Install Chromium for Playwright (required by both @playwright/mcp and the
 # /api/browser/run route). Fail the build if apk add fails — don't mask errors.
