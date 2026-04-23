@@ -80,6 +80,39 @@ interface:
     public: false
 
 # ==========================================
+# MEMORY — Cross-conversation recall (claude.ai-style)
+# ==========================================
+# Persistent user memories: the memory agent reads previous & new conversations,
+# extracts durable facts (preferences, context, skills) and injects them into
+# every future chat. Users see/edit them in Settings → Personalization.
+memory:
+  disabled: false
+  personalize: true
+  tokenLimit: 10000
+  validKeys:
+    - 'preferences'
+    - 'personal_info'
+    - 'work_info'
+    - 'skills'
+    - 'interests'
+    - 'context'
+    - 'projects'
+  agent:
+    provider: 'openAI'
+    model: 'gpt-4o-mini'
+    instructions: |
+      You are Aurion's memory manager. Read the full conversation history and
+      persist durable, user-specific facts that will help future replies feel
+      personal and context-aware (preferences, recurring topics, goals, tone,
+      work context, skills, ongoing projects).
+      Do NOT store secrets, credentials, one-off questions, or volatile state.
+      Keep each memory concise (≤ 1 sentence), factual, first-person where
+      relevant, and categorized under one of: preferences, personal_info,
+      work_info, skills, interests, context, projects.
+    model_parameters:
+      temperature: 0.1
+
+# ==========================================
 # MCP SETTINGS — Security
 # ==========================================
 mcpSettings:

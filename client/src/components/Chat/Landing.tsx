@@ -5,6 +5,7 @@ import { BirthdayIcon, TooltipAnchor, SplitText } from '@librechat/client';
 import { useChatContext, useAgentsMapContext, useAssistantsMapContext } from '~/Providers';
 import { useGetEndpointsQuery, useGetStartupConfig } from '~/data-provider';
 import ConvoIcon from '~/components/Endpoints/ConvoIcon';
+import SuggestionChips from '~/components/Chat/SuggestionChips';
 import { useLocalize, useAuthContext } from '~/hooks';
 import { getIconEndpoint, getEntity } from '~/utils';
 
@@ -203,6 +204,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
             {description}
           </div>
         )}
+        {!isAgent && !isAssistant && <SuggestionChips />}
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { MCPIcon, AttachmentIcon, OpenAIMinimalIcon } from '@librechat/client';
 import {
-  Bot,
   Brain,
   Zap,
   Plug2,
@@ -22,7 +21,6 @@ import {
 import type { TInterfaceConfig, TEndpointsConfig } from 'librechat-data-provider';
 import type { NavLink } from '~/common';
 import MCPBuilderPanel from '~/components/SidePanel/MCPBuilder/MCPBuilderPanel';
-import AgentPanelSwitch from '~/components/SidePanel/Agents/AgentPanelSwitch';
 import BookmarkPanel from '~/components/SidePanel/Bookmarks/BookmarkPanel';
 import PanelSwitch from '~/components/SidePanel/Builder/PanelSwitch';
 import Parameters from '~/components/SidePanel/Parameters/Panel';
@@ -67,14 +65,6 @@ export default function useSideNavLinks({
     permissionType: PermissionTypes.MEMORIES,
     permission: Permissions.READ,
   });
-  const hasAccessToAgents = useHasAccess({
-    permissionType: PermissionTypes.AGENTS,
-    permission: Permissions.USE,
-  });
-  const hasAccessToCreateAgents = useHasAccess({
-    permissionType: PermissionTypes.AGENTS,
-    permission: Permissions.CREATE,
-  });
   const hasAccessToUseMCPSettings = useHasAccess({
     permissionType: PermissionTypes.MCP_SERVERS,
     permission: Permissions.USE,
@@ -88,20 +78,8 @@ export default function useSideNavLinks({
   const Links = useMemo(() => {
     const links: NavLink[] = [];
 
-    if (
-      endpointsConfig?.[EModelEndpoint.agents] &&
-      hasAccessToAgents &&
-      hasAccessToCreateAgents &&
-      endpointsConfig[EModelEndpoint.agents].disableBuilder !== true
-    ) {
-      links.push({
-        title: 'com_sidepanel_agent_builder',
-        label: '',
-        icon: Bot,
-        id: EModelEndpoint.agents,
-        Component: AgentPanelSwitch,
-      });
-    }
+    // Agent builder panel intentionally hidden — Claude.ai-like UX focuses on
+    // the chat + MCP connectors, not custom agent creation.
 
     if (
       isAssistantsEndpoint(endpoint) &&
@@ -222,8 +200,6 @@ export default function useSideNavLinks({
     endpoint,
     endpointsConfig,
     keyProvided,
-    hasAccessToAgents,
-    hasAccessToCreateAgents,
     hasAccessToPrompts,
     hasAccessToMemories,
     hasAccessToReadMemories,
