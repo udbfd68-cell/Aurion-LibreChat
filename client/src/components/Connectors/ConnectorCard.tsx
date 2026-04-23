@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Plug2, X, Loader2, Wrench } from 'lucide-react';
+import { Plug2, X, Loader2, Wrench, ShieldCheck } from 'lucide-react';
 import type { RegistryServer } from './registryData';
 import { getIcon } from './iconMap';
 import { useMCPConnectors } from './useMCPConnectors';
@@ -11,12 +11,18 @@ export default function ConnectorCard({ server }: { server: RegistryServer }) {
   const info = getConnectionInfo(server.id);
   const [showConnect, setShowConnect] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string | null>(null);
   const Icon = getIcon(server.icon);
 
   const handleDisconnect = useCallback(async () => {
     setDisconnecting(true);
-    await disconnect(server.id);
+    setDisconnectError(null);
+    const result = await disconnect(server.id);
     setDisconnecting(false);
+    if (!result.success) {
+      setDisconnectError(result.error || 'Échec de la déconnexion');
+      setTimeout(() => setDisconnectError(null), 4000);
+    }
   }, [disconnect, server.id]);
 
   return (
@@ -31,6 +37,15 @@ export default function ConnectorCard({ server }: { server: RegistryServer }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-text-primary">{server.name}</span>
+            {server.vendorOfficial && (
+              <span
+                title="Serveur MCP officiel — OAuth vendeur direct"
+                className="flex items-center gap-0.5 rounded-sm bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-medium text-blue-600 dark:text-blue-400"
+              >
+                <ShieldCheck className="h-2.5 w-2.5" />
+                Officiel
+              </span>
+            )}
             {connected && (
               <div className="flex items-center gap-1">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -47,6 +62,9 @@ export default function ConnectorCard({ server }: { server: RegistryServer }) {
             )}
           </div>
           <p className="line-clamp-1 text-xs text-text-tertiary">{server.description}</p>
+          {disconnectError && (
+            <p className="mt-0.5 text-[10px] font-medium text-red-500">{disconnectError}</p>
+          )}
         </div>
 
         {/* Action */}

@@ -75,8 +75,8 @@ interface:
   fileCitations: true
   mcpServers:
     use: true
-    create: false
-    share: false
+    create: true
+    share: true
     public: false
 
 # ==========================================
@@ -136,6 +136,25 @@ mcpSettings:
     - 'api.openai.com'
     - 'api.anthropic.com'
     - 'openrouter.ai'
+    # Vendor-official remote MCP endpoints (real OAuth)
+    - 'mcp.linear.app'
+    - 'mcp.notion.com'
+    - 'mcp.atlassian.com'
+    - 'api.githubcopilot.com'
+    - 'mcp.stripe.com'
+    - 'mcp.sentry.dev'
+    - 'mcp.asana.com'
+    - 'mcp.paypal.com'
+    - 'mcp.squareup.com'
+    - 'mcp.intercom.com'
+    - 'docs.mcp.cloudflare.com'
+    - 'mcp.vercel.com'
+    - 'mcp.shopify.com'
+    - 'mcp.neon.tech'
+    - 'mcp.planetscale.com'
+    - 'mcp.canva.com'
+    - 'mcp.zapier.com'
+    - 'mcp.deepwiki.com'
 
 # ==========================================
 # MCP SERVERS — Pre-configured Connectors (App-level)
@@ -144,21 +163,125 @@ mcpSettings:
 # Users only need to click "Connect" → OAuth → Connected.
 # No URLs to enter. No manual configuration required.
 mcpServers:
-  
-  # ── GOOGLE SERVICES ──
-  # All Google services use the SAME OAuth app (one Google Cloud Project)
-  # Required env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, LIBRECHAT_URL
-  
-  
-  
-  
-  # ── LINEAR ──
-  # Required env vars: LINEAR_CLIENT_ID, LINEAR_CLIENT_SECRET, LIBRECHAT_URL
-  
-  
-  # ── GITHUB (via PAT) ──
-  # No OAuth required — user enters their Personal Access Token
-  # This is simpler for GitHub than OAuth for self-hosted setups
+
+  # ════════════════════════════════════════════════════════════════
+  # REMOTE MCP — Vendor-Official OAuth (click → popup → authorize)
+  # These use the MCP OAuth Dynamic Client Registration spec (RFC 7591).
+  # LibreChat auto-discovers OAuth config via /.well-known/oauth-authorization-server.
+  # No env vars, no client_id to provision — the vendor handles everything.
+  # ════════════════════════════════════════════════════════════════
+
+  linear-remote:
+    type: streamable-http
+    url: https://mcp.linear.app/sse
+    startup: false
+    serverInstructions: |
+      Linear issues, projects, cycles, triage — OAuth linear.app officiel.
+
+  notion-remote:
+    type: streamable-http
+    url: https://mcp.notion.com/mcp
+    startup: false
+    serverInstructions: |
+      Notion pages, bases de données, blocs, commentaires — OAuth notion.com officiel.
+
+  atlassian-remote:
+    type: streamable-http
+    url: https://mcp.atlassian.com/v1/sse
+    startup: false
+    serverInstructions: |
+      Atlassian Jira + Confluence — tickets, sprints, pages — OAuth atlassian.com officiel.
+
+  github-remote:
+    type: streamable-http
+    url: https://api.githubcopilot.com/mcp/
+    startup: false
+    serverInstructions: |
+      GitHub repos, issues, PRs, actions, code search — OAuth GitHub Copilot MCP officiel.
+
+  stripe-remote:
+    type: streamable-http
+    url: https://mcp.stripe.com
+    startup: false
+    serverInstructions: |
+      Stripe paiements, clients, abonnements, factures — OAuth stripe.com officiel.
+
+  sentry-remote:
+    type: streamable-http
+    url: https://mcp.sentry.dev/mcp
+    startup: false
+    serverInstructions: |
+      Sentry tracking erreurs, monitoring, issues — OAuth sentry.io officiel.
+
+  asana-remote:
+    type: streamable-http
+    url: https://mcp.asana.com/sse
+    startup: false
+    serverInstructions: |
+      Asana tâches, projets, équipes — OAuth asana.com officiel.
+
+  paypal-remote:
+    type: streamable-http
+    url: https://mcp.paypal.com/sse
+    startup: false
+    serverInstructions: |
+      PayPal paiements, factures, transactions — OAuth paypal.com officiel.
+
+  cloudflare-remote:
+    type: streamable-http
+    url: https://docs.mcp.cloudflare.com/mcp
+    startup: false
+    serverInstructions: |
+      Cloudflare Workers, R2, KV, DNS, docs — OAuth cloudflare.com officiel.
+
+  vercel-remote:
+    type: streamable-http
+    url: https://mcp.vercel.com/
+    startup: false
+    serverInstructions: |
+      Vercel déploiements, projets, domaines, debug — OAuth vercel.com officiel.
+
+  shopify-remote:
+    type: streamable-http
+    url: https://mcp.shopify.com/mcp
+    startup: false
+    serverInstructions: |
+      Shopify produits, commandes, stock — OAuth shopify.com officiel.
+
+  neon-remote:
+    type: streamable-http
+    url: https://mcp.neon.tech/sse
+    startup: false
+    serverInstructions: |
+      Neon Postgres serverless — branches, queries — OAuth neon.tech officiel.
+
+  intercom-remote:
+    type: streamable-http
+    url: https://mcp.intercom.com/sse
+    startup: false
+    serverInstructions: |
+      Intercom chat live, tickets support — OAuth intercom.com officiel.
+
+  zapier-remote:
+    type: streamable-http
+    url: https://mcp.zapier.com/api/mcp/mcp
+    startup: false
+    serverInstructions: |
+      Zapier proxy universel — Gmail, Slack, Google Drive, Calendar, Salesforce
+      et 7000+ services via une connexion zapier.com OAuth officielle.
+
+  deepwiki-remote:
+    type: streamable-http
+    url: https://mcp.deepwiki.com/mcp
+    startup: false
+    serverInstructions: |
+      DeepWiki — documentation IA pour tout repo GitHub. Sans auth.
+
+  # ════════════════════════════════════════════════════════════════
+  # LOCAL STDIO MCP — Require npx/uvx + env vars
+  # ════════════════════════════════════════════════════════════════
+
+  # ── GITHUB (via PAT — alternative à github-remote) ──
   
   github:
     type: stdio
