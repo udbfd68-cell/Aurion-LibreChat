@@ -643,6 +643,469 @@ mcpServers:
     serverInstructions: |
       Search READMEs and documentation of open-source GitHub projects.
 
+  # ══════════════════════════════════════════════════════════════════
+  # COMMUNITY MCPs (GitHub) — expands the toolbox to ~58 connectors
+  # ══════════════════════════════════════════════════════════════════
+
+  # ── DISCORD (v-3/discordmcp) ──
+  discord:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-discord']
+    env:
+      DISCORD_TOKEN: '{{DISCORD_BOT_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Send Discord messages, read channels, manage a bot.
+    customUserVars:
+      DISCORD_BOT_TOKEN:
+        title: 'Discord Bot Token'
+        description: 'Create at https://discord.com/developers/applications'
+
+  # ── TELEGRAM ──
+  telegram:
+    type: stdio
+    command: npx
+    args: ['-y', '@chaindead/telegram-mcp']
+    env:
+      TG_APP_ID: '{{TELEGRAM_API_ID}}'
+      TG_API_HASH: '{{TELEGRAM_API_HASH}}'
+    startup: false
+    serverInstructions: |
+      Read and send Telegram messages from your account.
+    customUserVars:
+      TELEGRAM_API_ID:
+        title: 'Telegram API ID'
+        description: 'Get at https://my.telegram.org/apps'
+      TELEGRAM_API_HASH:
+        title: 'Telegram API Hash'
+        description: 'Get at https://my.telegram.org/apps'
+
+  # ── WHATSAPP (MultiDevice via lharries/whatsapp-mcp) ──
+  whatsapp:
+    type: stdio
+    command: npx
+    args: ['-y', 'whatsapp-mcp']
+    startup: false
+    serverInstructions: |
+      Send and read WhatsApp messages. First run opens a QR code to pair.
+
+  # ── REDDIT ──
+  reddit:
+    type: stdio
+    command: npx
+    args: ['-y', '@adhikasp/mcp-reddit']
+    env:
+      REDDIT_CLIENT_ID: '{{REDDIT_CLIENT_ID}}'
+      REDDIT_CLIENT_SECRET: '{{REDDIT_CLIENT_SECRET}}'
+      REDDIT_USERNAME: '{{REDDIT_USERNAME}}'
+      REDDIT_PASSWORD: '{{REDDIT_PASSWORD}}'
+    startup: false
+    serverInstructions: |
+      Search Reddit, read threads, post comments.
+    customUserVars:
+      REDDIT_CLIENT_ID: { title: 'Reddit App Client ID', description: 'https://www.reddit.com/prefs/apps' }
+      REDDIT_CLIENT_SECRET: { title: 'Reddit Client Secret', description: 'From the same app page' }
+      REDDIT_USERNAME: { title: 'Reddit Username', description: 'Your reddit handle' }
+      REDDIT_PASSWORD: { title: 'Reddit Password', description: 'Password for the above account' }
+
+  # ── HACKER NEWS (read-only, no auth) ──
+  hackernews:
+    type: stdio
+    command: npx
+    args: ['-y', '@devyhan/hackernews-mcp']
+    startup: false
+    serverInstructions: |
+      Browse Hacker News top / new / best / Ask / Show stories and comments.
+
+  # ── YOUTUBE TRANSCRIPT (no-auth alternative) ──
+  youtube-transcript:
+    type: stdio
+    command: npx
+    args: ['-y', '@kimtaeyoon83/mcp-server-youtube-transcript']
+    startup: false
+    serverInstructions: |
+      Fetch transcripts/subtitles for any YouTube video URL. No key needed.
+
+  # ── SPOTIFY ──
+  spotify:
+    type: stdio
+    command: npx
+    args: ['-y', '@superseoworld/mcp-spotify']
+    env:
+      SPOTIFY_CLIENT_ID: '{{SPOTIFY_CLIENT_ID}}'
+      SPOTIFY_CLIENT_SECRET: '{{SPOTIFY_CLIENT_SECRET}}'
+      SPOTIFY_REDIRECT_URI: '{{SPOTIFY_REDIRECT_URI}}'
+    startup: false
+    serverInstructions: |
+      Control Spotify: search, play, playlists, listening history.
+    customUserVars:
+      SPOTIFY_CLIENT_ID: { title: 'Spotify Client ID', description: 'https://developer.spotify.com/dashboard' }
+      SPOTIFY_CLIENT_SECRET: { title: 'Spotify Client Secret', description: 'From the same app' }
+      SPOTIFY_REDIRECT_URI: { title: 'Spotify Redirect URI', description: 'e.g. http://localhost:8888/callback' }
+
+  # ── GOOGLE DRIVE (community, API-key based) ──
+  gdrive:
+    type: stdio
+    command: npx
+    args: ['-y', '@isaacphi/mcp-gdrive']
+    env:
+      CLIENT_ID: '{{GDRIVE_CLIENT_ID}}'
+      CLIENT_SECRET: '{{GDRIVE_CLIENT_SECRET}}'
+      GDRIVE_CREDS_DIR: '/workspace/.gdrive'
+    startup: false
+    serverInstructions: |
+      List, read, search Google Drive files.
+    customUserVars:
+      GDRIVE_CLIENT_ID: { title: 'Google OAuth Client ID', description: 'https://console.cloud.google.com/apis/credentials' }
+      GDRIVE_CLIENT_SECRET: { title: 'Google OAuth Client Secret', description: 'Same page' }
+
+  # ── GOOGLE CALENDAR (community) ──
+  gcalendar:
+    type: stdio
+    command: npx
+    args: ['-y', '@cocal/google-calendar-mcp']
+    env:
+      GOOGLE_OAUTH_CREDENTIALS: '{{GCAL_OAUTH_JSON_PATH}}'
+    startup: false
+    serverInstructions: |
+      Create, update, delete events and check free/busy.
+    customUserVars:
+      GCAL_OAUTH_JSON_PATH:
+        title: 'Path to Google OAuth JSON'
+        description: 'Path to downloaded credentials.json (e.g. /workspace/.gcal/creds.json)'
+
+  # ── WEATHER (no-auth: Open-Meteo) ──
+  weather:
+    type: stdio
+    command: npx
+    args: ['-y', '@timlukahorstmann/mcp-weather']
+    startup: false
+    serverInstructions: |
+      Get current weather and 7-day forecast for any city. No API key required.
+
+  # ── WIKIPEDIA (no-auth) ──
+  wikipedia:
+    type: stdio
+    command: npx
+    args: ['-y', 'wikipedia-mcp']
+    startup: false
+    serverInstructions: |
+      Search and read Wikipedia articles in any language. No key needed.
+
+  # ── ARXIV (research papers, no-auth) ──
+  arxiv:
+    type: stdio
+    command: npx
+    args: ['-y', '@blazickjp/arxiv-mcp-server']
+    startup: false
+    serverInstructions: |
+      Search arXiv for research papers and download PDFs to analyze.
+
+  # ── PUBMED (biomedical literature, no-auth) ──
+  pubmed:
+    type: stdio
+    command: npx
+    args: ['-y', 'pubmed-mcp']
+    startup: false
+    serverInstructions: |
+      Search PubMed for biomedical articles and abstracts.
+
+  # ── E-COMMERCE: SHOPIFY ──
+  shopify:
+    type: stdio
+    command: npx
+    args: ['-y', '@shopify/dev-mcp']
+    startup: false
+    serverInstructions: |
+      Query Shopify Admin/Storefront APIs and developer docs.
+
+  # ── PAYMENTS: PAYPAL ──
+  paypal:
+    type: stdio
+    command: npx
+    args: ['-y', '@paypal/mcp']
+    env:
+      PAYPAL_CLIENT_ID: '{{PAYPAL_CLIENT_ID}}'
+      PAYPAL_CLIENT_SECRET: '{{PAYPAL_CLIENT_SECRET}}'
+      PAYPAL_ENVIRONMENT: 'sandbox'
+    startup: false
+    serverInstructions: |
+      Manage PayPal payments, invoices, subscriptions.
+    customUserVars:
+      PAYPAL_CLIENT_ID: { title: 'PayPal Client ID', description: 'https://developer.paypal.com/dashboard/applications' }
+      PAYPAL_CLIENT_SECRET: { title: 'PayPal Client Secret', description: 'Same page' }
+
+  # ── MARKETING: MAILCHIMP ──
+  mailchimp:
+    type: stdio
+    command: npx
+    args: ['-y', 'mailchimp-mcp']
+    env:
+      MAILCHIMP_API_KEY: '{{MAILCHIMP_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Manage Mailchimp audiences, campaigns, automations.
+    customUserVars:
+      MAILCHIMP_API_KEY:
+        title: 'Mailchimp API Key'
+        description: 'https://us1.admin.mailchimp.com/account/api/'
+
+  # ── CRM: SALESFORCE ──
+  salesforce:
+    type: stdio
+    command: npx
+    args: ['-y', '@tsmztech/mcp-server-salesforce']
+    env:
+      SALESFORCE_USERNAME: '{{SF_USERNAME}}'
+      SALESFORCE_PASSWORD: '{{SF_PASSWORD}}'
+      SALESFORCE_TOKEN: '{{SF_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Salesforce objects CRUD, SOQL queries, metadata.
+    customUserVars:
+      SF_USERNAME: { title: 'Salesforce Username', description: 'Your SF login email' }
+      SF_PASSWORD: { title: 'Salesforce Password', description: 'Account password' }
+      SF_TOKEN: { title: 'Salesforce Security Token', description: 'From Personal Settings → Reset Security Token' }
+
+  # ── ANALYTICS: POSTHOG ──
+  posthog:
+    type: stdio
+    command: npx
+    args: ['-y', '@posthog/mcp']
+    env:
+      POSTHOG_AUTH_HEADER: 'Bearer {{POSTHOG_PERSONAL_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Query PostHog projects, feature flags, insights, cohorts.
+    customUserVars:
+      POSTHOG_PERSONAL_API_KEY:
+        title: 'PostHog Personal API Key'
+        description: 'https://app.posthog.com/project/settings#personal-api-keys'
+
+  # ── OBSERVABILITY: GRAFANA ──
+  grafana:
+    type: stdio
+    command: npx
+    args: ['-y', '@grafana/mcp-grafana']
+    env:
+      GRAFANA_URL: '{{GRAFANA_URL}}'
+      GRAFANA_API_KEY: '{{GRAFANA_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Query Grafana dashboards, datasources, alerts.
+    customUserVars:
+      GRAFANA_URL: { title: 'Grafana URL', description: 'e.g. https://my-org.grafana.net' }
+      GRAFANA_API_KEY: { title: 'Grafana API Key', description: 'Create from Configuration → API Keys' }
+
+  # ── SEARCH: MEILISEARCH ──
+  meilisearch:
+    type: stdio
+    command: npx
+    args: ['-y', 'meilisearch-mcp']
+    env:
+      MEILI_HTTP_ADDR: '{{MEILI_URL}}'
+      MEILI_MASTER_KEY: '{{MEILI_MASTER_KEY}}'
+    startup: false
+    serverInstructions: |
+      Search and index documents with Meilisearch.
+    customUserVars:
+      MEILI_URL: { title: 'Meilisearch URL', description: 'e.g. https://ms-xxx.meilisearch.io' }
+      MEILI_MASTER_KEY: { title: 'Meilisearch Master Key', description: 'From the instance dashboard' }
+
+  # ── CACHE / KV: REDIS ──
+  redis:
+    type: stdio
+    command: npx
+    args: ['-y', '@gongrzhe/server-redis-mcp']
+    env:
+      REDIS_URL: '{{REDIS_URL}}'
+    startup: false
+    serverInstructions: |
+      Redis GET/SET, lists, hashes, pub/sub.
+    customUserVars:
+      REDIS_URL:
+        title: 'Redis Connection URL'
+        description: 'redis://user:pass@host:6379'
+
+  # ── DATA: ELASTICSEARCH ──
+  elasticsearch:
+    type: stdio
+    command: npx
+    args: ['-y', '@elastic/mcp-server-elasticsearch']
+    env:
+      ES_URL: '{{ES_URL}}'
+      ES_API_KEY: '{{ES_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Search and query Elasticsearch indices.
+    customUserVars:
+      ES_URL: { title: 'Elasticsearch URL', description: 'https://your-cluster.es.cloud' }
+      ES_API_KEY: { title: 'Elasticsearch API Key', description: 'From Kibana → Stack Management → API Keys' }
+
+  # ── DEV: DOCKER (local socket) ──
+  docker:
+    type: stdio
+    command: npx
+    args: ['-y', 'docker-mcp']
+    startup: false
+    serverInstructions: |
+      List/run/stop containers, images, and compose stacks via local Docker.
+
+  # ── DEV: KUBERNETES ──
+  kubernetes:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-server-kubernetes']
+    startup: false
+    serverInstructions: |
+      Query Kubernetes clusters using the mounted kubeconfig.
+
+  # ── DEV: TERRAFORM ──
+  terraform:
+    type: stdio
+    command: npx
+    args: ['-y', '@hashicorp/terraform-mcp-server']
+    startup: false
+    serverInstructions: |
+      Help read Terraform state, modules, and the registry.
+
+  # ── DEV: VERCEL ──
+  vercel:
+    type: stdio
+    command: npx
+    args: ['-y', '@vercel/mcp-adapter']
+    env:
+      VERCEL_TOKEN: '{{VERCEL_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Manage Vercel deployments, projects, env vars, domains.
+    customUserVars:
+      VERCEL_TOKEN:
+        title: 'Vercel Token'
+        description: 'https://vercel.com/account/tokens'
+
+  # ── DEV: RENDER ──
+  render:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-server-render']
+    env:
+      RENDER_API_KEY: '{{RENDER_API_KEY}}'
+    startup: false
+    serverInstructions: |
+      Manage Render services, deploys, env vars.
+    customUserVars:
+      RENDER_API_KEY:
+        title: 'Render API Key'
+        description: 'https://dashboard.render.com/account/api-keys'
+
+  # ── DEV: NETLIFY ──
+  netlify:
+    type: stdio
+    command: npx
+    args: ['-y', '@netlify/mcp']
+    env:
+      NETLIFY_TOKEN: '{{NETLIFY_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Netlify sites, deploys, domains, forms.
+    customUserVars:
+      NETLIFY_TOKEN:
+        title: 'Netlify Access Token'
+        description: 'https://app.netlify.com/user/applications'
+
+  # ── OBSIDIAN (Local REST API) ──
+  obsidian:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-obsidian']
+    env:
+      OBSIDIAN_API_KEY: '{{OBSIDIAN_API_KEY}}'
+      OBSIDIAN_HOST: '{{OBSIDIAN_HOST}}'
+    startup: false
+    serverInstructions: |
+      Read/write notes in an Obsidian vault via the Local REST API plugin.
+    customUserVars:
+      OBSIDIAN_API_KEY: { title: 'Obsidian Local REST API Key', description: 'From the plugin settings' }
+      OBSIDIAN_HOST: { title: 'Obsidian Host', description: 'e.g. https://localhost:27124' }
+
+  # ── BEAR (macOS notes) ──
+  bear:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-bear']
+    env:
+      BEAR_API_TOKEN: '{{BEAR_API_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Search and read Bear notes.
+    customUserVars:
+      BEAR_API_TOKEN: { title: 'Bear API Token', description: 'Bear Settings → Advanced → API Token' }
+
+  # ── TRELLO ──
+  trello:
+    type: stdio
+    command: npx
+    args: ['-y', '@delorenj/mcp-server-trello']
+    env:
+      TRELLO_API_KEY: '{{TRELLO_API_KEY}}'
+      TRELLO_TOKEN: '{{TRELLO_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Manage Trello boards, lists, cards.
+    customUserVars:
+      TRELLO_API_KEY: { title: 'Trello API Key', description: 'https://trello.com/app-key' }
+      TRELLO_TOKEN: { title: 'Trello Token', description: 'Generated from the same page' }
+
+  # ── JIRA / CONFLUENCE (Atlassian) ──
+  atlassian:
+    type: stdio
+    command: uvx
+    args: ['mcp-atlassian']
+    env:
+      JIRA_URL: '{{JIRA_URL}}'
+      JIRA_USERNAME: '{{JIRA_USERNAME}}'
+      JIRA_API_TOKEN: '{{JIRA_API_TOKEN}}'
+      CONFLUENCE_URL: '{{CONFLUENCE_URL}}'
+      CONFLUENCE_USERNAME: '{{JIRA_USERNAME}}'
+      CONFLUENCE_API_TOKEN: '{{JIRA_API_TOKEN}}'
+    startup: false
+    serverInstructions: |
+      Read/write Jira issues and Confluence pages.
+    customUserVars:
+      JIRA_URL: { title: 'Jira Base URL', description: 'e.g. https://acme.atlassian.net' }
+      JIRA_USERNAME: { title: 'Atlassian Email', description: 'Your Atlassian account email' }
+      JIRA_API_TOKEN: { title: 'Atlassian API Token', description: 'https://id.atlassian.com/manage-profile/security/api-tokens' }
+      CONFLUENCE_URL: { title: 'Confluence Base URL', description: 'e.g. https://acme.atlassian.net/wiki' }
+
+  # ── NEWS (Bing/Google News aggregator, no-auth) ──
+  news:
+    type: stdio
+    command: npx
+    args: ['-y', 'mcp-news']
+    startup: false
+    serverInstructions: |
+      Get latest news headlines from public aggregators.
+
+  # ── FINANCE: YAHOO FINANCE (no-auth) ──
+  yahoo-finance:
+    type: stdio
+    command: uvx
+    args: ['yfmcp']
+    startup: false
+    serverInstructions: |
+      Stock quotes, historical prices, financials via Yahoo Finance.
+
+  # ── FINANCE: COINGECKO (crypto, no-auth) ──
+  coingecko:
+    type: stdio
+    command: npx
+    args: ['-y', '@coingecko/coingecko-mcp']
+    startup: false
+    serverInstructions: |
+      Crypto prices, market data, historical data. No API key for basic tier.
+
 # ==========================================
 # ENDPOINTS — LLM Providers
 # ==========================================
