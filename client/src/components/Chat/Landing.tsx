@@ -204,7 +204,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
             {description}
           </div>
         )}
-        {!isAgent && !isAssistant && <SuggestionChips />}
+        <SuggestionChips />
       </div>
     </div>
   );
