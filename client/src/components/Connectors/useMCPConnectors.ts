@@ -171,7 +171,7 @@ export function useMCPConnectors() {
 
   /** Connect a registry server — creates via POST /api/mcp/servers, then reinitializes */
   const connect = useCallback(
-    async (server: RegistryServer): Promise<{ success: boolean; error?: string }> => {
+    async (server: RegistryServer): Promise<{ success: boolean; error?: string; oauthUrl?: string }> => {
       const config = buildServerConfig(server);
       if (!config) {
         return {
@@ -199,30 +199,45 @@ export function useMCPConnectors() {
         if (existingName) {
           // Server exists — reinitialize it
           try {
-            await dataService.reinitializeMCPServer(existingName);
+            const result: any = await dataService.reinitializeMCPServer(existingName);
+            if (result?.oauthUrl) {
+              return { success: true, oauthUrl: result.oauthUrl };
+            }
             // Refetch to update status
             serversQuery.refetch();
             toolsQuery.refetch();
             statusQuery.refetch();
           } catch (reinitErr: any) {
             // Reinitialize might return oauthUrl — that's OK, not an error
-            if (reinitErr?.response?.data?.oauthUrl) {
-              return { success: true };
+            const oauthUrl = reinitErr?.response?.data?.oauthUrl;
+            if (oauthUrl) {
+              return { success: true, oauthUrl };
             }
           }
           return { success: true };
         }
 
         // Server doesn't exist — create it
-        await createMutation.mutateAsync({
+        const created: any = await createMutation.mutateAsync({
           config: config as any,
         });
 
+        // Backend may return OAuth URL directly on creation
+        if (created?.oauthUrl) {
+          return { success: true, oauthUrl: created.oauthUrl };
+        }
+
         // After creation, reinitialize to establish connection
         try {
-          await dataService.reinitializeMCPServer(server.id);
-        } catch {
-          // Non-fatal — server was created, reinit may be automatic
+          const reinit: any = await dataService.reinitializeMCPServer(server.id);
+          if (reinit?.oauthUrl) {
+            return { success: true, oauthUrl: reinit.oauthUrl };
+          }
+        } catch (reinitErr: any) {
+          const oauthUrl = reinitErr?.response?.data?.oauthUrl;
+          if (oauthUrl) {
+            return { success: true, oauthUrl };
+          }
         }
 
         return { success: true };
@@ -241,6 +256,13 @@ export function useMCPConnectors() {
     },
     [createMutation, useFallback, serversQuery, toolsQuery, statusQuery],
   );
+
+  /** Refresh status after OAuth window closes */
+  const refreshStatus = useCallback(() => {
+    serversQuery.refetch();
+    toolsQuery.refetch();
+    statusQuery.refetch();
+  }, [serversQuery, toolsQuery, statusQuery]);
 
   /** Disconnect a server — calls DELETE /api/mcp/servers/:name or localStorage fallback */
   const disconnect = useCallback(
@@ -301,6 +323,7 @@ export function useMCPConnectors() {
     disconnect,
     isConnected,
     getConnectionInfo,
+    refreshStatus,
 
     // Raw queries (for advanced use)
     serversQuery,

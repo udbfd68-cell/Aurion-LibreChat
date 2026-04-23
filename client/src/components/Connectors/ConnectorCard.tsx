@@ -67,8 +67,17 @@ export default function ConnectorCard({ server }: { server: RegistryServer }) {
             onClick={() => setShowConnect(true)}
             className="flex h-8 items-center gap-1.5 rounded-lg bg-text-primary px-3 text-xs font-medium text-surface-primary transition-colors hover:opacity-90"
           >
-            <Plug2 className="h-3.5 w-3.5" />
-            Connect
+            {server.transportType === 'stdio' ? (
+              <>
+                <Wrench className="h-3.5 w-3.5" />
+                Installer
+              </>
+            ) : (
+              <>
+                <Plug2 className="h-3.5 w-3.5" />
+                {server.authType === 'oauth' ? 'Se connecter' : 'Connecter'}
+              </>
+            )}
           </button>
         )}
       </div>
